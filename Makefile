@@ -16,7 +16,7 @@ lint:
 
 format:
 	@find . -name '*.go' -type f -not -path "*/mocks/*" | xargs go run mvdan.cc/gofumpt -w .
-	@find . -name '*.go' -type f -not -path "*/mocks/*" | xargs go run golang.org/x/tools/cmd/goimports -w
+	@find . -name '*.go' -type f | xargs go run golang.org/x/tools/cmd/goimports -w -local github.com/skip-mev/connect-mmu
 .PHONY: format
 
 mocks:
