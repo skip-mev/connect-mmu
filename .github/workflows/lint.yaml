@@ -21,3 +21,25 @@ jobs:
           version: latest
           only-new-issues: true
           args: --timeout 8m0s --verbose
+
+  codegen-lint:
+    name: codegen-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.0
+      - name: codegen
+        run: |
+          make format
+          make mocks
+      - name: git-status
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Git working directory is not clean. The following changes were detected:"
+            git status --porcelain
+            exit 1
+          else
+            echo "Git working directory is clean."
+          fi
