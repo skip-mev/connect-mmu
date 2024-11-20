@@ -1,0 +1,9 @@
+{
+    "rpc_address": "https://dydx-rpc.polkachu.com/",
+    "grpc_address": "dydx-grpc.polkachu.com:23890",
+    "rest_address": "https://dydx-api.polkachu.com/",
+    "dydx": true,
+    "version": "slinky",
+    "chain_id": "localdydxprotocol",
+    "prefix": "dydx"
+}

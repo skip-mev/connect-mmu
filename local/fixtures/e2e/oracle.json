@@ -1,0 +1,99 @@
+{
+  "providers":{
+    "raydium_api": {
+      "api": {
+        "endpoints": [
+          {
+            "url":"https://solana.polkachu.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://connect-solana.kingnodes.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://solana.lavenderfive.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://solana-rpc.rhino-apis.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          }
+        ]
+      }
+    },
+    "uniswapv3_api-ethereum": {
+      "api": {
+        "endpoints": [
+          {
+            "url":"https://ethereum.lavenderfive.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://ethereum-rpc.polkachu.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://connect-eth.kingnodes.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://ethereum-rpc.rhino-apis.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          }
+        ]
+      }
+    },
+    "uniswapv3_api-base": {
+      "api": {
+        "endpoints": [
+          {
+            "url":"https://base-rpc.rhino-apis.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://connect-base.kingnodes.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          },
+          {
+            "url":"https://base.lavenderfive.com",
+            "authentication":{
+              "apiKeyHeader":"x-api-key",
+              "apiKey":""
+            }
+          }
+        ]
+      }
+    }
+  }
+}

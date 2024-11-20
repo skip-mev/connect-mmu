@@ -1,0 +1,395 @@
+{
+  "providers": {
+    "binance_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "bitfinex_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "bitstamp_api": {
+      "filters": {
+        "top_markets": 100
+      },
+      "ignore_liquidity": true
+    },
+    "bybit_ws": {
+      "filters": {
+        "top_markets": 100
+      },
+      "ignore_liquidity": true
+    },
+    "coinbase_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "crypto_dot_com_ws":{
+      "filters": {
+        "top_markets": 100
+      },
+      "ignore_liquidity": true
+    },
+    "gate_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "huobi_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "kraken_api": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "kucoin_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "okx_ws": {
+      "filters": {
+        "top_markets": 100
+      }
+    },
+    "raydium_api": {
+      "filters": {
+        "top_markets": 50
+      },
+      "ignore_liquidity": true
+    },
+    "uniswapv3_api-ethereum": {
+      "filters": {
+        "top_markets": 50
+      },
+      "ignore_liquidity": true
+    },
+    "uniswapv3_api-base": {
+      "filters": {
+        "top_markets": 50
+      },
+      "ignore_liquidity": true
+    }
+  },
+  "disable_providers": {
+    "WELL/USD": ["bybit_ws"]
+  },
+  "quotes": {
+    "USD": {
+      "min_provider_volume": 80000,
+      "min_provider_liquidity": 1000
+    },
+    "USDT": {
+      "min_provider_volume": 80000,
+      "min_provider_liquidity": 1000,
+      "normalize_by_pair": "USDT/USD"
+    },
+    "BTC": {
+      "min_provider_volume": 15,
+      "min_provider_liquidity": 1000,
+      "normalize_by_pair": "BTC/USD"
+    },
+    "ETH": {
+      "min_provider_volume": 20,
+      "min_provider_liquidity": 1000,
+      "normalize_by_pair": "ETH/USD"
+    },
+    "WETH": {
+      "min_provider_volume": 20,
+      "min_provider_liquidity": 1000,
+      "normalize_by_pair": "ETH/USD"
+    },
+    "SOL": {
+      "normalize_by_pair": "SOL/USD",
+      "min_provider_volume": 10
+    }
+  },
+  "exclude_pairs": {
+    "GBP/USD": {},
+    "CAD/USD": {},
+    "JPY/USD": {},
+    "CNY/USD": {},
+    "AUD/USD": {},
+    "MXN/USD": {},
+    "NZD/USD": {},
+    "AGLD/USD": {}
+  },
+  "s3_config": {
+    "bucket": "slinky-marketmap-staging-dev",
+    "chain_id": "dydx-testnet",
+    "commit_hash": "bigcommitterenergy",
+    "region": "us-east-2"
+  },
+  "min_cex_provider_count": 3,
+  "min_dex_provider_count": 1,
+  "min_provider_count_override": 1,
+  "max_market_age": 7200000000000,
+  "enable_all": false,
+  "chain_version": "slinky",
+  "market_map_override": {
+    "markets": {
+      "TRY/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "TRY",
+            "Quote": "USD"
+          },
+          "decimals": 11,
+          "min_provider_count": 1,
+          "metadata_JSON": "{\"reference_price\":2935133548,\"liquidity\":1504939,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2810\"}]}"
+        },
+        "provider_configs": [
+          {
+            "name": "binance_ws",
+            "off_chain_ticker": "USDTTRY",
+            "invert": true,
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "metadata_JSON": ""
+          },
+          {
+            "name": "okx_ws",
+            "off_chain_ticker": "USDT-TRY",
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "invert": true,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "EUR/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "EUR",
+            "Quote": "USD"
+          },
+          "decimals": 9,
+          "min_provider_count": 1,
+          "metadata_JSON": "{\"reference_price\":1100800000,\"liquidity\":3843298,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2790\"}]}"
+        },
+        "provider_configs": [
+          {
+            "name": "binance_ws",
+            "off_chain_ticker": "EURUSDT",
+            "invert": false,
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "metadata_JSON": ""
+          },
+          {
+            "name": "okx_ws",
+            "off_chain_ticker": "EUR-USDT",
+            "invert": false,
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "BRL/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "BRL",
+            "Quote": "USD"
+          },
+          "decimals": 10,
+          "min_provider_count": 1,
+          "metadata_JSON": "{\"reference_price\":1760563380,\"liquidity\":2479974,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2783\"}]}"
+        },
+        "provider_configs": [
+          {
+            "name": "binance_ws",
+            "off_chain_ticker": "USDTBRL",
+            "invert": true,
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "metadata_JSON": ""
+          },
+          {
+            "name": "okx_ws",
+            "off_chain_ticker": "USDT-BRL",
+            "invert": true,
+            "normalize_by_pair": {
+              "Base": "USDT",
+              "Quote": "USD"
+            },
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "TRUMPWIN/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "TRUMPWIN",
+            "Quote": "USD"
+          },
+          "decimals": 4,
+          "min_provider_count": 1,
+          "metadata_JSON": ""
+        },
+        "provider_configs": [
+          {
+            "name": "polymarket_api",
+            "off_chain_ticker": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917/21742633143463906290569050155826241533067272736897614950488156847949938836455",
+            "normalize_by_pair": null,
+            "invert": false,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "HARRISWINPOP/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "HARRISWINPOP",
+            "Quote": "USD"
+          },
+          "decimals": 4,
+          "min_provider_count": 1,
+          "metadata_JSON": ""
+        },
+        "provider_configs": [
+          {
+            "name": "polymarket_api",
+            "off_chain_ticker": "0x265366ede72d73e137b2b9095a6cdc9be6149290caa295738a95e3d881ad0865/21271000291843361249209065706097167029083067325856089903026951915683588703117",
+            "normalize_by_pair": null,
+            "invert": false,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "CHIEFSWINSB/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "CHIEFSWINSB",
+            "Quote": "USD"
+          },
+          "decimals": 4,
+          "min_provider_count": 1,
+          "metadata_JSON": ""
+        },
+        "provider_configs": [
+          {
+            "name": "polymarket_api",
+            "off_chain_ticker": "0xcd14a0b8d67206ebf320c3e7754c5a1db352c4b163a90c2d6c598024e465a2b0/22535833765723427929773245088435042776045949943240943368073750664192788269527",
+            "normalize_by_pair": null,
+            "invert": false,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "RAVENSWINSB/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "RAVENSWINSB",
+            "Quote": "USD"
+          },
+          "decimals": 4,
+          "min_provider_count": 1,
+          "metadata_JSON": ""
+        },
+        "provider_configs": [
+          {
+            "name": "polymarket_api",
+            "off_chain_ticker": "0x0e73cc6c999f4fc1e3692905fc99fe7eb98beb16a284c4be762e3e64c42d1544/65899342545197974464674790375677332783836387984276968232607993321656475710546",
+            "normalize_by_pair": null,
+            "invert": false,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "LIONSWINSB/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "LIONSWINSB",
+            "Quote": "USD"
+          },
+          "decimals": 4,
+          "min_provider_count": 1,
+          "metadata_JSON": ""
+        },
+        "provider_configs": [
+          {
+            "name": "polymarket_api",
+            "off_chain_ticker": "0xeb3cef6b7f43fcd35ce139e89c0b00cbc3a70a556c87ef934f8ca984208aaaa8/51052158557761079600060821198344572146234634299666295420235183322360518805559",
+            "normalize_by_pair": null,
+            "invert": false,
+            "metadata_JSON": ""
+          }
+        ]
+      },
+      "USDT/USD": {
+        "ticker": {
+          "currency_pair": {
+            "Base": "USDT",
+            "Quote": "USD"
+          },
+          "decimals": 9,
+          "min_provider_count": 3
+        },
+        "provider_configs": [
+          {
+            "name": "binance_ws",
+            "off_chain_ticker": "USDCUSDT",
+            "invert": true
+          },
+          {
+            "name": "bybit_ws",
+            "off_chain_ticker": "USDCUSDT",
+            "invert": true
+          },
+          {
+            "name": "coinbase_ws",
+            "off_chain_ticker": "USDT-USD"
+          },
+          {
+            "name": "huobi_ws",
+            "off_chain_ticker": "ethusdt",
+            "normalize_by_pair": {
+              "Base": "ETH",
+              "Quote": "USD"
+            },
+            "invert": true
+          },
+          {
+            "name": "kraken_api",
+            "off_chain_ticker": "USDTZUSD"
+          },
+          {
+            "name": "kucoin_ws",
+            "off_chain_ticker": "BTC-USDT",
+            "normalize_by_pair": {
+              "Base": "BTC",
+              "Quote": "USD"
+            },
+            "invert": true
+          },
+          {
+            "name": "okx_ws",
+            "off_chain_ticker": "USDC-USDT",
+            "invert": true
+          },
+          {
+            "name": "crypto_dot_com_ws",
+            "off_chain_ticker": "USDT_USD"
+          }
+        ]
+      }
+    }
+  }
+}

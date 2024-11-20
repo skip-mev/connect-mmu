@@ -1,0 +1,98 @@
+{
+  "data": [
+    {
+      "id": "eth_0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "type": "token",
+      "attributes": {
+        "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "name": "Wrapped Ether",
+        "symbol": "WETH",
+        "image_url": "https://coin-images.coingecko.com/coins/images/2518/small/weth.png?1696503332",
+        "coingecko_coin_id": "weth",
+        "decimals": 18,
+        "total_supply": "2857948323759546829032506.0",
+        "price_usd": "3409.94240161112",
+        "fdv_usd": "9741737853",
+        "total_reserve_in_usd": "223647402.9995",
+        "volume_usd": {
+          "h24": "293895087.459"
+        },
+        "market_cap_usd": null
+      },
+      "relationships": {
+        "top_pools": {
+          "data": [
+            {
+              "id": "eth_0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+              "type": "pool"
+            },
+            {
+              "id": "eth_0xb48e4a607b6eadebbe84c832e19e368d81424270",
+              "type": "pool"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "eth_0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "type": "token",
+      "attributes": {
+        "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "name": "USD Coin",
+        "symbol": "USDC",
+        "image_url": "https://coin-images.coingecko.com/coins/images/6319/small/usdc.png?1696506694",
+        "coingecko_coin_id": "usd-coin",
+        "decimals": 6,
+        "total_supply": "24495762240644432.0",
+        "price_usd": "1.00003459662372",
+        "fdv_usd": "24496513867",
+        "total_reserve_in_usd": "223169078.9491",
+        "volume_usd": {
+          "h24": "281472370.811842"
+        },
+        "market_cap_usd": "24496544321.8765"
+      },
+      "relationships": {
+        "top_pools": {
+          "data": [
+            {
+              "id": "eth_0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+              "type": "pool"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "eth_0xb69100340a5947e856d873463694ae2186146c43",
+      "type": "token",
+      "attributes": {
+        "address": "0xb69100340a5947e856d873463694ae2186146c43",
+        "name": "PEPER",
+        "symbol": "PEPER",
+        "image_url": "https://example.com/peper_logo.png",
+        "coingecko_coin_id": "peper",
+        "decimals": 18,
+        "total_supply": "420690000000000000000000000.0",
+        "price_usd": "0.00000541568159886096",
+        "fdv_usd": "2278323",
+        "total_reserve_in_usd": "478324.0538",
+        "volume_usd": {
+          "h24": "12422716.6471283"
+        },
+        "market_cap_usd": null
+      },
+      "relationships": {
+        "top_pools": {
+          "data": [
+            {
+              "id": "eth_0xb48e4a607b6eadebbe84c832e19e368d81424270",
+              "type": "pool"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

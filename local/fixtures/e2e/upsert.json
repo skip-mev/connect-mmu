@@ -1,0 +1,8 @@
+{
+  "restricted_markets": [
+    "USDT/USD",
+    "ETH/USD",
+    "BTC/USD",
+    "SOL/USD"
+  ]
+}
