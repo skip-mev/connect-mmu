@@ -23,7 +23,7 @@ require (
 	github.com/josephburnett/jd/v2 v2.0.0-20240818191833-6125a15c637a
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/skip-mev/connect/v2 v2.1.2
-	github.com/skip-mev/slinky v1.0.13
+	github.com/skip-mev/slinky v1.0.8
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
