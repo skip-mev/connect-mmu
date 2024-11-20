@@ -2,6 +2,7 @@ package generator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -95,6 +96,10 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 	}
 
 	s.logger.Info("account used to submit txs", zap.Any("account", acc))
+
+	if acc.GetPubKey() == nil {
+		return nil, errors.New("cannot find public key for signing account")
+	}
 
 	address, err := signing.PubKeyBech32(s.chainConfig.Prefix, acc.GetPubKey())
 	if err != nil {
