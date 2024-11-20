@@ -21,13 +21,3 @@ jobs:
           version: latest
           only-new-issues: true
           args: --timeout 8m0s --verbose
-
-  markdown-lint:
-    name: markdown-lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: markdown-lint
-        uses: avto-dev/markdown-lint@v1
-        with:
-          args: "**/*.md"

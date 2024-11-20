@@ -25,7 +25,6 @@ The workflow has five stages. Each stage outputs files which can be inspected to
 
 Defaults can be customized by flags. Pass `--help` to a command to get details about how to change these defaults.
 
-
 ### Testnet
 
 ```bash
