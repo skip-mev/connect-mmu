@@ -1,0 +1,68 @@
+run:
+  tests: true
+  timeout: 10m
+  allow-parallel-runners: true
+  concurrency: 4
+
+linters:
+  disable-all: true
+  enable:
+    # Check for pass []any as any in variadic func(...any).
+    - asasalint
+    - dogsled
+    - copyloopvar
+    - goconst
+    - gocritic
+    - gofumpt
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - errorlint
+    # Checks for pointers to enclosing loop variables.
+    - copyloopvar
+    - nolintlint
+    # Finds slices that could potentially be pre-allocated.
+    # Small performance win + cleaner code.
+    - prealloc
+    # Lint your Prometheus metrics name.
+    - promlinter
+    - staticcheck
+    - revive
+    - stylecheck
+    - typecheck
+    - thelper
+    - tenv
+    - tparallel
+    - unused
+
+issues:
+  exclude-rules:
+    - text: "Use of weak random number generator"
+      linters:
+        - gosec
+    - text: "Don't use ALL_CAPS in Go names"
+      linters:
+        - revive
+    - text: "ST1003:"
+      linters:
+        - stylecheck
+    # - text: "ST1016:"
+    #   linters:
+    #     - stylecheck
+    # - text: "leading space"
+    #   linters:
+    #     - nolintlint
+
+  max-issues-per-linter: 10000
+  max-same-issues: 10000
+
+linters-settings:
+  dogsled:
+    max-blank-identifiers: 3
+  nolintlint:
+    allow-unused: false
+    require-explanation: false
+    require-specific: false
