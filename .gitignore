@@ -1,5 +1,5 @@
 build/
-.idea
 .DS_STORE
 .vscode/
 vendor
+.idea
