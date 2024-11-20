@@ -374,7 +374,9 @@
     },
     "signing": {
       "type": "simulate_agent",
-      "config": {}
+      "config": {
+        "address": "dydx16g6078l63hyyna6rs65rxs2cg8rgshy68t6anj"
+      }
     },
     "submitter": {
       "polling_frequency": 10000000000,
