@@ -54,10 +54,6 @@ type CoinMarketCapConfig struct {
 }
 
 func (cc *CoinMarketCapConfig) Validate() error {
-	if cc.APIKey == "" {
-		return fmt.Errorf("coinmarketcap_api_key is required")
-	}
-
 	return nil
 }
 

@@ -3,6 +3,7 @@ package basic
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -11,6 +12,8 @@ import (
 	indexer "github.com/skip-mev/connect-mmu/market-indexer"
 	"github.com/skip-mev/connect-mmu/store/provider"
 )
+
+const coinMarketCapKey = "CMC_API_KEY"
 
 func IndexCmd() *cobra.Command {
 	var flags indexCmdFlags
@@ -33,6 +36,11 @@ func IndexCmd() *cobra.Command {
 
 			if cfg.Index == nil {
 				return errors.New("index configuration missing from mmu config")
+			}
+
+			envCMCKey := os.Getenv(coinMarketCapKey)
+			if envCMCKey != "" {
+				cfg.Index.CoinMarketCapConfig.APIKey = envCMCKey
 			}
 
 			providerStore := provider.NewMemoryStore()
