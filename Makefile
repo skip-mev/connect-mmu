@@ -52,3 +52,17 @@ install: install-mmu install-sentry
 test:
 	@go test ./... -race -v
 .PHONY: test
+
+test-e2e:
+	@./scripts/setup_dydx_localnet.sh
+	cd mmu/test && go test -v e2e_test.go
+	-cd v4-chain/protocol && make localnet-stop
+.PHONY: test-e2e
+
+start-localnet-dydx:
+	@./scripts/setup_dydx_localnet.sh
+.PHONY: start-localnet-dydx
+
+stop-localnet-dydx:
+	@cd v4-chain/protocol && make localnet-stop
+.PHONY:  stop-localnet-dydx

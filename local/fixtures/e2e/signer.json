@@ -1,0 +1,6 @@
+{
+  "type": "local_agent",
+  "config": {
+    "private_key_file": "../local/fixtures/key/test.privkey"
+  }
+}

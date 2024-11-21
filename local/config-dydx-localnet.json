@@ -373,9 +373,9 @@
       }
     },
     "signing": {
-      "type": "simulate_agent",
+      "type": "local_agent",
       "config": {
-        "address": "dydx199tqg4wdlnu4qjlxchpd7seg454937hjrknju4"
+        "private_key_file": "./local/fixtures/key/test.privkey"
       }
     },
     "submitter": {
@@ -388,6 +388,7 @@
     "grpc_address": "localhost:9090",
     "rest_address": "http://localhost:1317",
     "dydx": true,
+    "chain_id": "localdydxprotocol",
     "version": "slinky",
     "prefix": "dydx"
   }
