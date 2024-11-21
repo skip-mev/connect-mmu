@@ -82,7 +82,7 @@ go run ./cmd/mmu generate --config ./local/config-dydx-mainnet.json
 
 The `generate` job converts provider data into a market map—a collection of base/quote asset pairs (markets). Each market includes metadata (like reference prices) and a list of providers offering prices for that market, each with configuration details. The output is saved as `generated-market-map`.
 
-- **Note**: `generated-market-map-removals` is an additional artifact from the indexing job that contains markets filtered out due to certain criteria. This is useful for debugging and understanding why some markets were not included.
+- **Note**: `generated-market-map-removals` is an additional artifact from the indexing job that contains markets filtered out due to not meeting certain criteria. This is useful for debugging and understanding why some markets were not included.
 
 ---
 
