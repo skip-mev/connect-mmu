@@ -16,7 +16,6 @@
       { "name": "gecko" }
     ],
     "coinmarketcap": { "api_key": "" },
-    "raydium": null,
     "gecko_network_dex_pairs": [{ "network": "eth", "dex": "uniswap_v3" }]
   },
   "generate": {
@@ -97,14 +96,6 @@
         "filters": { "top_markets": 100 },
         "ignore_liquidity": false,
         "ignore_volume": false
-      },
-      "raydium_api": {
-        "isSupplemental": false,
-        "require_aggregate_ids": false,
-        "filters": { "top_markets": 50 },
-        "ignore_liquidity": true,
-        "ignore_volume": false,
-        "is_defi": true
       },
       "uniswapv3_api-base": {
         "isSupplemental": false,
