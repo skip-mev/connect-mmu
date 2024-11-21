@@ -55,7 +55,7 @@ test:
 
 test-e2e:
 	@./scripts/setup_dydx_localnet.sh
-	cd mmu/test && go test -v e2e_test.go
+	cd test && go test -v e2e_test.go
 	-cd v4-chain/protocol && make localnet-stop
 .PHONY: test-e2e
 
