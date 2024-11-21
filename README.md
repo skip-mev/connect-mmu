@@ -21,9 +21,9 @@ The `localnet` configuration is meant for a locally running testnet. You can con
 
 ## Running the Workflow
 
-The workflow has five stages. Each stage outputs files which can be inspected to debug issues. By default, they are located in the local `./tmp` directory.
+- **Extra Flags**: Additional command flags are available in `flags.go`, or use `--help` from the CLI to see all options.
+- **Output Directory**: By default, all generated files are saved in the `./tmp` directory.
 
-Defaults can be customized by flags. Pass `--help` to a command to get details about how to change these defaults.
 
 ### Testnet Example
 
@@ -49,10 +49,6 @@ go run ./cmd/mmu upserts --config ./local/config-dydx-mainnet.json
 go run ./cmd/mmu dispatch --config ./local/config-dydx-mainnet.json --simulate
 ```
 
-## Notes
-
-- **Extra Flags**: Additional command flags are available in `flags.go`, or use `--help` from the CLI to see all options.
-- **Output Directory**: By default, all generated files are saved in the `./tmp` directory.
 
 ## Recommended Workflow
 
@@ -96,7 +92,9 @@ Validates configurations and generated market maps. This helps ensure configurat
 
 ```bash
 # Clone the Connect repository and checkout branch v1.0.13
+# Run make install-sentry and add the go binard directory to your shell's PATH
 # Run `make install` in the Connect repository and link to Go environment
+# sentry in validator/cmd/sentry
 # ln -s $(go env GOBIN)/slinky $(go env GOBIN)/connect
 go run ./cmd/mmu validate --market-map ./tmp/generated-market-map.json --oracle-config ./local/fixtures/e2e/oracle.json --start-delay 10s --duration 1m
 ```
@@ -146,8 +144,6 @@ The `dispatch` job prepares and submits transactions to the blockchain, splittin
 - `--simulate-address <address>`: Uses a specified address for simulation.
 
 ---
-
-
 
 ## Commands
 
