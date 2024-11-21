@@ -3,6 +3,7 @@ package basic
 import (
 	"errors"
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
