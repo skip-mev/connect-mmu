@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.uber.org/zap"
 
@@ -43,8 +44,15 @@ type Indexer struct {
 	knownAssets utils.AssetMap
 }
 
+const coinMarketCapKey = "CMC_API_KEY"
+
 // NewIndexer creates a new Indexer with the provided config.
 func NewIndexer(cfg config.MarketConfig, logger *zap.Logger, writer provider.Store) (*Indexer, error) {
+	envCMCKey := os.Getenv(coinMarketCapKey)
+	if envCMCKey != "" {
+		cfg.CoinMarketCapConfig.APIKey = envCMCKey
+	}
+
 	svc := Indexer{
 		logger:        logger.With(zap.String("service", "indexer")),
 		providerStore: writer,
