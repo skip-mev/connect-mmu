@@ -4,7 +4,7 @@ package basic
 const (
 	// all basic commands
 	ConfigPathFlag        = "config"
-	ConfigPathDefault     = "./mmu/local/config-dydx-testnet.json"
+	ConfigPathDefault     = "./local/config-dydx-testnet.json"
 	ConfigPathDescription = "path to market map updater configuration"
 
 	// generate
