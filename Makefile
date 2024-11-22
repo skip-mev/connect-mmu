@@ -6,8 +6,11 @@
 
 BUILD_DIR ?= $(CURDIR)/build
 build:
-	@go build -o $(BUILD_DIR)/ ./...
+	@go build -o $(BUILD_DIR)/ ./cmd/mmu/
 .PHONY: build
+
+build-docker:
+	@docker build -f contrib/images/mmu.Dockerfile -t mmu .
 
 lint:
 	@echo "--> Running linter"
