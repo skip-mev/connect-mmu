@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	txv1beta1 "cosmossdk.io/api/cosmos/tx/v1beta1"
 	"github.com/cometbft/cometbft/types"
@@ -82,7 +83,7 @@ func NewLocalSigningAgent(privKeyFile string, chainConfig config.ChainConfig) (*
 	}
 
 	kr := keyring.NewInMemory(cdc)
-	err = kr.ImportPrivKeyHex(keyName, string(pkBz), "secp256k1")
+	err = kr.ImportPrivKeyHex(keyName, strings.ReplaceAll(string(pkBz), "\n", ""), "secp256k1")
 	if err != nil {
 		return nil, fmt.Errorf("error importing private key: %w", err)
 	}
