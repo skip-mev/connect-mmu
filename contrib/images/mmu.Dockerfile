@@ -4,7 +4,7 @@ WORKDIR /src/connect-mmu
 RUN apt-get update && apt-get install -y curl && apt-get install jq -y
 COPY . .
 
-RUN go build -mod=vendor -o build/ ./...
+RUN go build -o build/ ./...
 RUN make install-sentry
 
 # install slinky v1.0.12
