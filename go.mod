@@ -12,6 +12,7 @@ replace (
 )
 
 require (
+	cosmossdk.io/api v0.7.6
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/x/tx v0.13.5
 	github.com/avast/retry-go/v4 v4.6.0
@@ -35,6 +36,7 @@ require (
 	golang.org/x/vuln v1.1.3
 	gonum.org/v1/gonum v0.15.1
 	google.golang.org/grpc v1.67.1
+	google.golang.org/protobuf v1.35.1
 	gopkg.in/typ.v4 v4.3.1
 	mvdan.cc/gofumpt v0.7.0
 )
@@ -42,7 +44,6 @@ require (
 require (
 	4d63.com/gocheckcompilerdirectives v1.2.1 // indirect
 	4d63.com/gochecknoglobals v0.2.1 // indirect
-	cosmossdk.io/api v0.7.6 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/core v0.11.1 // indirect
 	cosmossdk.io/depinject v1.0.0 // indirect
@@ -348,7 +349,6 @@ require (
 	google.golang.org/genproto v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
