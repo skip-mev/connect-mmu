@@ -51,7 +51,7 @@ func ValidateCmd() *cobra.Command {
 		Use:     "validate",
 		Short:   "checks the healthiness of a marketmap in a real Connect instance",
 		Long:    "ingests logs from Connect and outputs a healthcheck of all currency_pair/providers",
-		Example: "validate --marketmap marketmap.json --oracle-config oracle.json --start-delay 10s --duration 1m",
+		Example: "validate --market-map marketmap.json --oracle-config oracle.json --start-delay 10s --duration 1m",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if err := checkInstalled("sentry"); err != nil {
