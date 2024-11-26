@@ -37,9 +37,6 @@
       "name": "mexc"
     },
     {
-      "name": "raydium"
-    },
-    {
       "name": "gecko"
     }
   ],
@@ -54,28 +51,6 @@
     {
       "network": "base",
       "dex": "uniswap-v3-base"
-    }
-  ],
-  "raydium": [
-    {
-      "endpoint": "https://solana-rpc.rhino-apis.com",
-      "node_key": ""
-    },
-    {
-      "endpoint": "https://solana.polkachu.com:443",
-      "node_key": ""
-    },
-    {
-      "endpoint": "https://dydx.helius-rpc.com",
-      "node_key": ""
-    },
-    {
-      "endpoint": "https://connect-solana.kingnodes.com",
-      "node_key": ""
-    },
-    {
-      "endpoint": "https://solana.lavenderfive.com:443",
-      "node_key": ""
     }
   ]
 }

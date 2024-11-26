@@ -2,12 +2,12 @@ package generator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	slinkymmtypes "github.com/skip-mev/slinky/x/marketmap/types"
 	"go.uber.org/zap"
@@ -95,23 +95,21 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 		return nil, err
 	}
 
-	s.logger.Info("account used to submit txs", zap.Any("account", acc))
-
-	if acc.GetPubKey() == nil {
-		return nil, errors.New("cannot find public key for signing account")
+	// convert to a base account
+	baseAcc, ok := acc.(*authtypes.BaseAccount)
+	if !ok {
+		return nil, fmt.Errorf("expected BaseAccount but got %T", acc)
 	}
 
-	address, err := signing.PubKeyBech32(s.chainConfig.Prefix, acc.GetPubKey())
-	if err != nil {
-		s.logger.Error("failed to bech32ify address", zap.Error(err))
-		return nil, NewInvalidSignerPubkeyError(err)
-	}
+	s.logger.Info("account used to submit txs", zap.Any("account", baseAcc))
+	address := baseAcc.Address
+	s.logger.Info("derived signing address", zap.String("address", address))
 
 	txs := make([]cmttypes.Tx, 0)
-	simSequence := acc.GetSequence()
+	simSequence := baseAcc.GetSequence()
 
 	for _, msg := range msgs {
-		accSequence := acc.GetSequence()
+		accSequence := baseAcc.GetSequence()
 
 		var upsertMsg sdk.Msg
 		switch s.chainConfig.Version {
@@ -152,7 +150,7 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 		}
 
 		// update the account sequence
-		err = acc.SetSequence(accSequence + 1)
+		err = baseAcc.SetSequence(accSequence + 1)
 		if err != nil {
 			return nil, err
 		}
