@@ -101,10 +101,8 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 		return nil, errors.New("cannot find public key for signing account")
 	}
 
-	address, err := sdk.Bech32ifyAddressBytes(s.chainConfig.Prefix, acc.GetAddress())
-	if err != nil {
-		s.logger.Error("failed to get bech32 address of signing account", zap.Error(err))
-	}
+	// stringer interface will bech32-ify the address bytes
+	address := acc.GetAddress().String()
 
 	txs := make([]cmttypes.Tx, 0)
 	simSequence := acc.GetSequence()
