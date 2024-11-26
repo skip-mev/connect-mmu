@@ -80,7 +80,12 @@ func (c *coreGenerator) estimateUnsignedTx(
 	txf = txf.WithGas(gas)
 	txf = txf.WithSequence(accSequence) // set actual sequence
 
-	c.logger.Info("attaching fee to transaction", zap.String("min gas price", minGasPrice.String()))
+	c.logger.Info("transaction configuration",
+		zap.String("chain-id", txf.ChainID()),
+		zap.Uint64("sequence", txf.Sequence()),
+		zap.Uint64("gas_estimation", gas),
+		zap.String("gas prices", txf.GasPrices().String()),
+	)
 
 	return txf.BuildUnsignedTx(msg)
 }
