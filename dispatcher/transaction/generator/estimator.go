@@ -11,7 +11,7 @@ import (
 )
 
 // gasAdjust is the amount to multiply estimated gas by to account for "headroom" for tx inclusion.
-const gasAdjust = 1.25
+const gasAdjust = 1.5
 
 type SimulationGasEstimator struct {
 	conn   *grpc.ClientConn
