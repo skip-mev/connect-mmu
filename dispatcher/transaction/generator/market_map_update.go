@@ -3,11 +3,11 @@ package generator
 import (
 	"context"
 	"fmt"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	slinkymmtypes "github.com/skip-mev/slinky/x/marketmap/types"
 	"go.uber.org/zap"
