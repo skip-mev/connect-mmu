@@ -388,7 +388,7 @@
     "grpc_address": "54.199.218.236:9090",
     "rest_address": "https://dydx-lcd-testnet.enigma-validator.com",
     "dydx": true,
-    "chain_id": "dydxprotocol-testnet",
+    "chain_id": "dydx-testnet-4",
     "version": "slinky",
     "prefix": "dydx"
   }
