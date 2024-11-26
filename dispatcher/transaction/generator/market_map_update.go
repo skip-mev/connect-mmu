@@ -101,10 +101,9 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 		return nil, errors.New("cannot find public key for signing account")
 	}
 
-	address, err := signing.PubKeyBech32(s.chainConfig.Prefix, acc.GetPubKey())
+	address, err := sdk.Bech32ifyAddressBytes(s.chainConfig.Prefix, acc.GetAddress())
 	if err != nil {
-		s.logger.Error("failed to bech32ify address", zap.Error(err))
-		return nil, NewInvalidSignerPubkeyError(err)
+		s.logger.Error("failed to get bech32 address of signing account", zap.Error(err))
 	}
 
 	txs := make([]cmttypes.Tx, 0)
