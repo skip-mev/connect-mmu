@@ -319,7 +319,7 @@ func TestFeeds_Sort(t *testing.T) {
 	}
 }
 
-func TestFeeds_ToMarketMap2(t *testing.T) {
+func TestFeeds_ToMarketMap(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	type simpleMarket struct {
 		ticker   string
@@ -395,7 +395,7 @@ func TestFeeds_ToMarketMap2(t *testing.T) {
 	}
 }
 
-func TestFeeds_ToMarketMap(t *testing.T) {
+func TestFeeds_ToMarketMap_Empty(t *testing.T) {
 	tests := []struct {
 		name    string
 		f       types.Feeds
