@@ -256,27 +256,34 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 		if err != nil {
 			return mmtypes.MarketMap{}, fmt.Errorf("failed to get feed venue for %s: %w", feed.ProviderConfig.Name, err)
 		}
+		// if it has metadata, we need to see if we can resolve this to an existing market.
 		if md != nil {
-			// if this feed corresponds to an existing market
-			// we need to consolidate them.
+			// check if theres a market with this metadata already.
 			existingMarketTicker, ok := idToMarket[*md]
-			if ok {
+			if ok { // if there is, we need to consolidate these markets.
+				// keep track of the final ticker.
 				ticker := feed.Ticker.String()
 				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
 				// we set the feed's ticker to the shorter one.
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
+					// existing ticker is shorter, so we tack that one.
 					ticker = existingMarketTicker
 					tickerSplit := strings.Split(ticker, "/")
+					// update the feed to use the shorter ticker.
 					feed.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
-				} else if len(existingMarketTicker) > len(feed.Ticker.String()) { // theres an existing market who's ticker is too long.
+				} else if len(existingMarketTicker) > len(feed.Ticker.String()) {
+					// if the existing market is a longer ticker, we need to update the market's ticker.
 					tickerSplit := strings.Split(ticker, "/")
+
+					// update the existing market to use the shorter ticker.
 					existingMarket := mm.Markets[existingMarketTicker]
 					existingMarket.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
 					delete(mm.Markets, existingMarketTicker)
 					mm.Markets[ticker] = existingMarket
 				}
+				// set the shorter ticker to the mapping.
 				idToMarket[*md] = ticker
-			} else { // if no idToMarket exists for this feed, we simply set the market.
+			} else { // if we dont have an entry for this ID yet, we simply set the market.
 				idToMarket[*md] = feed.Ticker.String()
 			}
 		}
