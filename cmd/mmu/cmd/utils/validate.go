@@ -11,9 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
-
 	"github.com/skip-mev/connect/v2/x/marketmap/types"
+	"github.com/spf13/cobra"
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/utils/validate"
 	"github.com/skip-mev/connect-mmu/lib/file"
