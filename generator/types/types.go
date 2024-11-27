@@ -230,24 +230,6 @@ func (f Feeds) ToProviderFeeds() ProviderFeeds {
 	return providerFeeds
 }
 
-func (f Feeds) cmcIDMapping() (map[string]string, error) {
-	mapping := make(map[string]string)
-	for _, feed := range f {
-		if feed.Ticker.Metadata_JSON != "" {
-			var md tickermetadata.CoreMetadata
-			if err := json.Unmarshal([]byte(feed.Ticker.Metadata_JSON), &md); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal metadata from ticker %s: %w", feed.Ticker.Metadata_JSON, err)
-			}
-			for _, id := range md.AggregateIDs {
-				if id.Venue == VenueCoinMarketcap {
-					mapping[feed.Ticker.String()] = id.ID
-				}
-			}
-		}
-	}
-	return mapping, nil
-}
-
 // ToMarketMap translates the set of feeds to a valid MarketMap by:
 // - converting Feed objects to Markets or appending them to existing markets.
 // - removing markets that have providers below MinProviderCount.
