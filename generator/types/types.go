@@ -80,6 +80,9 @@ type Feed struct {
 	LiquidityInfo types.LiquidityInfo
 }
 
+// venueID will extract the ID for the given venue in the ticker's metadata.
+// if the venue does not exist, or the ticker doesn't have metadata,
+// a nil aggregator is returned.
 func (f *Feed) venueID(venue string) (*tickermetadata.AggregatorID, error) {
 	if f.Ticker.Metadata_JSON != "" {
 		var md tickermetadata.CoreMetadata
