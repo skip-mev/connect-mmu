@@ -66,13 +66,13 @@ func (sts *CometTransactionSubmitter) Submit(ctx context.Context, tx cmttypes.Tx
 	res, err := sts.client.BroadcastTxSync(broadcastCtx, tx)
 	if err != nil {
 		sts.logger.Error("failed to broadcast transaction", zap.Error(err))
-		return NewTxBroadcastError(err)
+		return fmt.Errorf("failed to broadcast transaction: %w", err)
 	}
 
 	// check for the check-tx code
 	if res.Code != cometabci.CodeTypeOK {
 		sts.logger.Error("transaction check-tx failed", zap.Uint32("code", res.Code), zap.String("log", res.Log))
-		return NewCheckTxError(res.Log, res.Code)
+		return fmt.Errorf("transaction check-tx failed with code %d", res.Code)
 	}
 
 	sts.logger.Info("transaction submitted", zap.Uint32("code", res.Code), zap.String("tx", hex.EncodeToString(tx.Hash())))
@@ -103,7 +103,6 @@ func (sts *CometTransactionSubmitter) checkTxInclusion(ctx context.Context, hash
 			// try to check inclusion
 			result, err := sts.client.Tx(ctx, hash, true)
 			if err != nil {
-				sts.logger.Debug("failed to check transaction", zap.Error(err))
 				continue
 			}
 

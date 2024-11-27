@@ -30,7 +30,7 @@ func ConvertUpsertsToMessages(
 		// fail if the market is invalid
 		if err := market.ValidateBasic(); err != nil {
 			logger.Error("invalid market", zap.Error(err))
-			return nil, NewInvalidMarketError(err)
+			return nil, fmt.Errorf("invalid market: %w", err)
 		}
 
 		// validity check for market
@@ -38,7 +38,7 @@ func ConvertUpsertsToMessages(
 			// if the market size exceeds the max tx size, then we can't create a tx for it (fail)
 			logger.Error("market size exceeds max tx size", zap.Any("market", market), zap.Int("size",
 				market.Size()), zap.Int("max_size", cfg.MaxBytesPerTx))
-			return nil, NewMsgGenerationError(fmt.Errorf("market size exceeds max tx size: %d > %d", market.Size(), cfg.MaxBytesPerTx))
+			return nil, fmt.Errorf("market size exceeds max tx size: %d > %d", market.Size(), cfg.MaxBytesPerTx)
 		}
 
 		// update the currentTxSize

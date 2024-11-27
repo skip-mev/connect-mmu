@@ -8,7 +8,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/skip-mev/connect-mmu/client/dydx"
-	"github.com/skip-mev/connect-mmu/errors"
 	libdydx "github.com/skip-mev/connect-mmu/lib/dydx"
 	"github.com/skip-mev/connect-mmu/override/update"
 )
@@ -114,7 +113,7 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 		actualMarket, ok := actual.Markets[connectTicker.String()]
 		if !ok {
 			logger.Error("actual market for cross-margined perpetual not found", zap.String("ticker", connectTicker.String()))
-			return mmtypes.MarketMap{}, errors.NewMarketNotFoundError(fmt.Sprintf("actual market for cross-margined perpetual %s not found", connectTicker.String()))
+			return mmtypes.MarketMap{}, fmt.Errorf("actual market for cross-margined perpetual %s not found", connectTicker.String())
 		}
 
 		// check for the market in generated

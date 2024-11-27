@@ -60,7 +60,7 @@ func (s *SlinkyModuleMarketMapClient) GetMarketMap(ctx context.Context) (mmtypes
 	mm, err := s.marketMapModuleClient.MarketMap(ctx, &slinkymmtypes.MarketMapRequest{})
 	if err != nil {
 		s.logger.Error("error fetching market-map from slinky x/marketmap", zap.Error(err))
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, fmt.Errorf("error fetching market-map from slinky x/marketmap: %w", err)
 	}
 
 	// if entry is nil, return an empty market-map
@@ -96,7 +96,7 @@ func (s *ConnectModuleMarketMapClient) GetMarketMap(ctx context.Context) (mmtype
 	mm, err := s.marketMapModuleClient.MarketMap(ctx, &mmtypes.MarketMapRequest{})
 	if err != nil {
 		s.logger.Error("error fetching market-map from connect x/marketmap", zap.Error(err))
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, fmt.Errorf("error fetching market-map from connect x/marketmap: %w", err)
 	}
 
 	// if entry is nil, return an empty market-map
