@@ -258,11 +258,13 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 		}
 		// if it has metadata, we need to see if we can resolve this to an existing market.
 		if md != nil {
+			// keep track of the shortest ticker. we'll use this to set the value of the
+			// CMC id to ticker string mapping.
 			shortestTicker := feed.Ticker.String()
+
 			// check if theres a market with this metadata already.
 			existingMarketTicker, ok := idToMarket[*md]
 			if ok { // if there is, we need to consolidate these markets.
-				// keep track of the final ticker.
 				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
 				// we set the feed's ticker to the shorter one.
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
