@@ -268,16 +268,22 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
 					// existing ticker is shorter, so we tack that one.
 					ticker = existingMarketTicker
-					tickerSplit := strings.Split(ticker, "/")
 					// update the feed to use the shorter ticker.
-					feed.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
+					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
+					if err != nil {
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
+					}
+					feed.Ticker.CurrencyPair = newTicker
 				} else if len(existingMarketTicker) > len(feed.Ticker.String()) {
 					// if the existing market is a longer ticker, we need to update the market's ticker.
-					tickerSplit := strings.Split(ticker, "/")
+					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
+					if err != nil {
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
+					}
 
 					// update the existing market to use the shorter ticker.
 					existingMarket := mm.Markets[existingMarketTicker]
-					existingMarket.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
+					existingMarket.Ticker.CurrencyPair = newTicker
 					delete(mm.Markets, existingMarketTicker)
 					mm.Markets[ticker] = existingMarket
 				}
