@@ -40,7 +40,7 @@ func TestTransactionSubmitter(t *testing.T) {
 		cli.On("BroadcastTxSync", mock.Anything, tx).Return(nil, err).Once()
 
 		actualErr := s.Submit(ctx, tx)
-		require.Error(t, actualErr, submitter.NewTxBroadcastError(err))
+		require.Error(t, actualErr)
 	})
 
 	t.Run("transaction failed in check-tx", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestTransactionSubmitter(t *testing.T) {
 		}, nil).Once()
 
 		actualErr := s.Submit(ctx, tx)
-		require.Error(t, actualErr, submitter.NewCheckTxError(log, code))
+		require.Error(t, actualErr)
 	})
 
 	t.Run("broadcast success but execution failure", func(t *testing.T) {
