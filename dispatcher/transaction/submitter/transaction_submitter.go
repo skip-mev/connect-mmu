@@ -103,7 +103,6 @@ func (sts *CometTransactionSubmitter) checkTxInclusion(ctx context.Context, hash
 			// try to check inclusion
 			result, err := sts.client.Tx(ctx, hash, true)
 			if err != nil {
-				sts.logger.Debug("failed to check transaction", zap.Error(err))
 				continue
 			}
 
