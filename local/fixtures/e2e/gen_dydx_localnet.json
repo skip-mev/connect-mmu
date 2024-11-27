@@ -1,24 +1,4 @@
 {
-  "index": {
-    "ingesters": [
-      { "name": "binance" },
-      { "name": "bitfinex" },
-      { "name": "bitstamp" },
-      { "name": "bybit" },
-      { "name": "coinbase" },
-      { "name": "crypto_dot_com" },
-      { "name": "gate" },
-      { "name": "huobi" },
-      { "name": "kraken" },
-      { "name": "kucoin" },
-      { "name": "okx" },
-      { "name": "mexc" },
-      { "name": "gecko" }
-    ],
-    "coinmarketcap": { "api_key": "" },
-    "gecko_network_dex_pairs": [{ "network": "eth", "dex": "uniswap_v3" }]
-  },
-  "generate": {
     "providers": {
       "binance_ws": {
         "isSupplemental": false,
@@ -350,37 +330,4 @@
     },
     "enable_all": false,
     "min_provider_count_override": 1
-  },
-  "upsert": {
-    "restricted_markets": ["USDT/USD", "ETH/USD", "BTC/USD", "SOL/USD"]
-  },
-  "dispatch": {
-    "tx": {
-      "max_bytes_per_tx": 100000,
-      "max_gas": 800000000,
-      "min_gas_price": {
-        "denom": "adv4tnt",
-        "amount": "20000000000.000000000000000000"
-      }
-    },
-    "signing": {
-      "type": "local_agent",
-      "config": {
-        "private_key_file": "./local/fixtures/key/test.privkey"
-      }
-    },
-    "submitter": {
-      "polling_frequency": 10000000000,
-      "polling_duration": 300000000000
-    }
-  },
-  "chain": {
-    "rpc_address": "http://localhost:26657",
-    "grpc_address": "localhost:9090",
-    "rest_address": "http://localhost:1317",
-    "dydx": true,
-    "chain_id": "localdydxprotocol",
-    "version": "slinky",
-    "prefix": "dydx"
   }
-}
