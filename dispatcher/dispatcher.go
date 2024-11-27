@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	cmthttp "github.com/cometbft/cometbft/rpc/client/http"
 	cmttypes "github.com/cometbft/cometbft/types"
@@ -29,7 +30,7 @@ type Dispatcher struct {
 	// transactionGenerator is the client that provides the transaction that upserts a set of markets
 	transactionGenerator generator.TransactionGenerator
 
-	// marketMapClient is the client that communicates with the market-map module of a chain
+	// transactionClient is the client that communicates with the market-map module of a chain
 	transactionClient submitter.TransactionSubmitter
 
 	txConfig      config.TransactionConfig
@@ -107,7 +108,7 @@ func (d *Dispatcher) SubmitTransactions(ctx context.Context, txs []cmttypes.Tx) 
 		// submit the transaction
 		if err := d.transactionClient.Submit(ctx, tx); err != nil {
 			d.logger.Error("failed to submit transaction", zap.Error(err))
-			return err
+			return fmt.Errorf("failed to submit transaction: %w", err)
 		}
 		d.logger.Info("submitted transaction successfully", zap.String("tx", hex.EncodeToString(tx.Hash())))
 	}
