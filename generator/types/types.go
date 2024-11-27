@@ -266,16 +266,15 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
 				// we set the feed's ticker to the shorter one.
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
-					// existing ticker is shorter, so we take that one.
+					// existing ticker is shorter so we update the feed to use the shorter ticker.
 					ticker = existingMarketTicker
-					// update the feed to use the shorter ticker.
 					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
 					if err != nil {
 						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
 					}
 					feed.Ticker.CurrencyPair = newTicker
 				} else if len(existingMarketTicker) > len(feed.Ticker.String()) {
-					// if the existing market is a longer ticker, we need to update the market's ticker.
+					// if the existing market is a longer ticker, we need to update the marketmap market's ticker.
 					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
 					if err != nil {
 						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
@@ -287,7 +286,7 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 					delete(mm.Markets, existingMarketTicker)
 					mm.Markets[ticker] = existingMarket
 				}
-				// set the shorter ticker to the mapping.
+				// set the shorter ticker to the mapping, so the next feed will use this ticker.
 				idToMarket[*md] = ticker
 			} else { // if we dont have an entry for this ID yet, we simply set the market.
 				idToMarket[*md] = feed.Ticker.String()
