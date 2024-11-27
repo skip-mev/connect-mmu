@@ -6,8 +6,6 @@ import (
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
-
-	"github.com/skip-mev/connect-mmu/errors"
 )
 
 // GetMarketMapUpserts returns the sequence of market-map updates required to translate actual (on chain) to generated.
@@ -64,9 +62,7 @@ func GetMarketMapUpserts(
 					} else {
 						logger.Error("market normalize-by pair not found in generated marketmap",
 							zap.String("market", ticker), zap.String("normalize pair", normalizeByPair.String()))
-						return nil, errors.NewMarketNotFoundError(
-							fmt.Sprintf("market %s's normalize-by market %s not found in generated market-map", ticker, normalizeByPairMarket.String()),
-						)
+						return nil, fmt.Errorf("market %s's normalize-by market %s not found in generated market-map", ticker, normalizeByPairMarket.String())
 					}
 				}
 			}
@@ -80,7 +76,7 @@ func GetMarketMapUpserts(
 	// return all upserts + verify that the finalized market-map is valid
 	if err := actualCopy.ValidateBasic(); err != nil {
 		logger.Error("updated marketmap is invalid", zap.Error(err))
-		return nil, errors.NewInvalidMarketMapError(fmt.Errorf("updated market-map is invalid: %w", err))
+		return nil, fmt.Errorf("updated market-map is invalid: %w", err)
 	}
 
 	return upserts, nil
