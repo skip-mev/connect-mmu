@@ -258,39 +258,36 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 		}
 		// if it has metadata, we need to see if we can resolve this to an existing market.
 		if md != nil {
+			shortestTicker := feed.Ticker.String()
 			// check if theres a market with this metadata already.
 			existingMarketTicker, ok := idToMarket[*md]
 			if ok { // if there is, we need to consolidate these markets.
 				// keep track of the final ticker.
-				ticker := feed.Ticker.String()
 				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
 				// we set the feed's ticker to the shorter one.
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
 					// existing ticker is shorter so we update the feed to use the shorter ticker.
-					ticker = existingMarketTicker
-					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
+					shortestTicker = existingMarketTicker
+					newTicker, err := connecttypes.CurrencyPairFromString(shortestTicker)
 					if err != nil {
-						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", shortestTicker, err)
 					}
 					feed.Ticker.CurrencyPair = newTicker
 				} else if len(existingMarketTicker) > len(feed.Ticker.String()) {
 					// if the existing market is a longer ticker, we need to update the marketmap market's ticker.
-					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
+					newTicker, err := connecttypes.CurrencyPairFromString(shortestTicker)
 					if err != nil {
-						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", ticker, err)
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to parse ticker from %s: %w", shortestTicker, err)
 					}
 
 					// update the existing market to use the shorter ticker.
 					existingMarket := mm.Markets[existingMarketTicker]
 					existingMarket.Ticker.CurrencyPair = newTicker
 					delete(mm.Markets, existingMarketTicker)
-					mm.Markets[ticker] = existingMarket
+					mm.Markets[shortestTicker] = existingMarket
 				}
-				// set the shorter ticker to the mapping, so the next feed will use this ticker.
-				idToMarket[*md] = ticker
-			} else { // if we dont have an entry for this ID yet, we simply set the market.
-				idToMarket[*md] = feed.Ticker.String()
 			}
+			idToMarket[*md] = shortestTicker
 		}
 
 		mmMarket, found := mm.Markets[feed.TickerString()]
