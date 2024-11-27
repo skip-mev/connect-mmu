@@ -11,15 +11,14 @@ import (
 	"strings"
 
 	"github.com/josephburnett/jd/v2"
+	marketmaptypes "github.com/skip-mev/connect/v2/x/marketmap/types"
+	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
+	slinkymarketmaptypes "github.com/skip-mev/slinky/x/marketmap/types"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	marketmaptypes "github.com/skip-mev/connect/v2/x/marketmap/types"
-	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
-	slinkymarketmaptypes "github.com/skip-mev/slinky/x/marketmap/types"
 
 	"github.com/skip-mev/connect-mmu/client/marketmap"
 )
@@ -41,7 +40,7 @@ func DiffCmd() *cobra.Command {
 		Short: "generate a diff between a generated marketmap and an on-chain marketmap",
 		Long: "diff a generated marketmap and a live, on-chain marketmap. the +/- symbols indicate changes that will" +
 			" be made to the marketmap if the generated marketmap were to overwrite the chain's marketmap.",
-		Example: "diff --marketmap mm.json -n dydx-testnet",
+		Example: "diff --market-map mm.json -n dydx-testnet",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			var grpcURL string
