@@ -1,12 +1,15 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
 
+	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
+	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
 	"golang.org/x/exp/slices"
 
 	"github.com/skip-mev/connect-mmu/types"
@@ -75,6 +78,21 @@ type Feed struct {
 	CMCInfo types.CoinMarketCapInfo
 	// LiquidityInfo contains buy and sell side liquidity denominated in USD.
 	LiquidityInfo types.LiquidityInfo
+}
+
+func (f *Feed) venueID(venue string) (*tickermetadata.AggregatorID, error) {
+	if f.Ticker.Metadata_JSON != "" {
+		var md tickermetadata.CoreMetadata
+		if err := json.Unmarshal([]byte(f.Ticker.Metadata_JSON), &md); err != nil {
+			return nil, err
+		}
+		for _, id := range md.AggregateIDs {
+			if id.Venue == venue {
+				return &id, nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 func NewFeed(
@@ -209,6 +227,24 @@ func (f Feeds) ToProviderFeeds() ProviderFeeds {
 	return providerFeeds
 }
 
+func (f Feeds) cmcIDMapping() (map[string]string, error) {
+	mapping := make(map[string]string)
+	for _, feed := range f {
+		if feed.Ticker.Metadata_JSON != "" {
+			var md tickermetadata.CoreMetadata
+			if err := json.Unmarshal([]byte(feed.Ticker.Metadata_JSON), &md); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal metadata from ticker %s: %w", feed.Ticker.Metadata_JSON, err)
+			}
+			for _, id := range md.AggregateIDs {
+				if id.Venue == VenueCoinMarketcap {
+					mapping[feed.Ticker.String()] = id.ID
+				}
+			}
+		}
+	}
+	return mapping, nil
+}
+
 // ToMarketMap translates the set of feeds to a valid MarketMap by:
 // - converting Feed objects to Markets or appending them to existing markets.
 // - removing markets that have providers below MinProviderCount.
@@ -227,8 +263,41 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 
 	mm := mmtypes.MarketMap{Markets: make(map[string]mmtypes.Market)}
 
+	idToMarket := make(map[tickermetadata.AggregatorID]string)
+
 	for _, feed := range f {
-		if mmMarket, found := mm.Markets[feed.TickerString()]; found {
+		// check if this feed has a CMC ID.
+		md, err := feed.venueID(VenueCoinMarketcap)
+		if err != nil {
+			return mmtypes.MarketMap{}, fmt.Errorf("failed to get feed venue for %s: %w", feed.ProviderConfig.Name, err)
+		}
+		if md != nil {
+			// if this feed corresponds to an existing market
+			// we need to consolidate them.
+			existingMarketTicker, ok := idToMarket[*md]
+			if ok {
+				ticker := feed.Ticker.String()
+				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
+				// we set the feed's ticker to the shorter one.
+				if len(feed.Ticker.String()) > len(existingMarketTicker) {
+					ticker = existingMarketTicker
+					tickerSplit := strings.Split(ticker, "/")
+					feed.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
+				} else if len(existingMarketTicker) > len(feed.Ticker.String()) { // theres an existing market who's ticker is too long.
+					tickerSplit := strings.Split(ticker, "/")
+					existingMarket := mm.Markets[existingMarketTicker]
+					existingMarket.Ticker.CurrencyPair = connecttypes.NewCurrencyPair(tickerSplit[0], tickerSplit[1])
+					delete(mm.Markets, existingMarketTicker)
+					mm.Markets[ticker] = existingMarket
+				}
+				idToMarket[*md] = ticker
+			} else { // if no idToMarket exists for this feed, we simply set the market.
+				idToMarket[*md] = feed.Ticker.String()
+			}
+		}
+
+		mmMarket, found := mm.Markets[feed.TickerString()]
+		if found {
 			// always use the highest MinProviderCount available if combining
 			if feed.Ticker.MinProviderCount > mmMarket.Ticker.MinProviderCount {
 				mmMarket.Ticker.MinProviderCount = feed.Ticker.MinProviderCount

@@ -1,12 +1,18 @@
 package types_test
 
 import (
+	"fmt"
 	"math/big"
+	"slices"
+	"strings"
 	"testing"
 
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
+	"gopkg.in/typ.v4/maps"
 
 	"github.com/skip-mev/connect-mmu/generator/types"
 	mmutypes "github.com/skip-mev/connect-mmu/types"
@@ -309,6 +315,82 @@ func TestFeeds_Sort(t *testing.T) {
 			tt.f.Sort()
 
 			require.Equal(t, tt.want, tt.f)
+		})
+	}
+}
+
+func TestFeeds_ToMarketMap2(t *testing.T) {
+	logger := zaptest.NewLogger(t)
+	type simpleMarket struct {
+		ticker   string
+		provider string
+		id       int
+	}
+	tests := []struct {
+		name                    string
+		marketsByCMCID          []simpleMarket
+		expectedMarketProviders map[string][]string
+	}{
+		{
+			name: "uniswap should be combined",
+			marketsByCMCID: []simpleMarket{
+				{"FOO,UNISWAP,0XFOOBAR/USD", "uniswap", 40},
+				{"FOO/USD", "binance", 40},
+				{"FOO/USD", "coinbase", 40},
+
+				{"BAZ/USD", "binance", 20},
+				{"BAZ,UNISWAP,0XBAZBAR/USD", "uniswap", 20},
+				{"BAZ/USD", "kraken", 20},
+
+				{"BOOK/USD", "foobar", 30},
+				{"BOOK/USD", "foobaz", -1},
+				{"BOOK/USD", "bazbar", 30},
+
+				{"DOG/USD", "binance", -1},
+				{"DOG/USD", "kraken", -1},
+			},
+			expectedMarketProviders: map[string][]string{
+				"FOO/USD":  {"binance", "uniswap", "coinbase"},
+				"BAZ/USD":  {"binance", "uniswap", "kraken"},
+				"BOOK/USD": {"foobar", "foobaz", "bazbar"},
+				"DOG/USD":  {"binance", "kraken"},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			feeds := make(types.Feeds, 0)
+			for _, market := range tc.marketsByCMCID {
+				ticker := strings.Split(market.ticker, "/")
+				metadata := ""
+				if market.id > 0 {
+					metadata = fmt.Sprintf("{\"reference_price\":1340000000,\"liquidity\":169321,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"%d\"}]}", market.id)
+				}
+				feeds = append(feeds, types.Feed{
+					Ticker: mmtypes.Ticker{
+						CurrencyPair:  connecttypes.CurrencyPair{Base: ticker[0], Quote: ticker[1]},
+						Metadata_JSON: metadata,
+					},
+					ProviderConfig: mmtypes.ProviderConfig{Name: market.provider},
+					ReferencePrice: new(big.Float).SetFloat64(40), // doesn't matter.
+				})
+
+			}
+			logger.Debug("converting feeds", zap.Int("num_feeds", len(feeds)))
+			mm, err := feeds.ToMarketMap()
+			require.NoError(t, err)
+			logger.Debug("resulting markets", zap.Any("markets", maps.Keys(mm.Markets)))
+			for ticker, providers := range tc.expectedMarketProviders {
+				market, ok := mm.Markets[ticker]
+				require.True(t, ok, "expected market to exist: %s", ticker)
+				logger.Debug("market providers", zap.String("market", market.Ticker.String()), zap.Int("providers", len(providers)))
+				require.Equal(t, len(providers), len(market.ProviderConfigs))
+				for _, provider := range providers {
+					require.True(t, slices.ContainsFunc(market.ProviderConfigs, func(config mmtypes.ProviderConfig) bool {
+						return config.Name == provider
+					}))
+				}
+			}
 		})
 	}
 }
