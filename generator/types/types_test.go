@@ -356,6 +356,11 @@ func TestFeeds_ToMarketMap(t *testing.T) {
 				"DOG/USD":  {"binance", "kraken"},
 			},
 		},
+		{
+			name:                    "empty should work",
+			marketsByCMCID:          []simpleMarket{},
+			expectedMarketProviders: map[string][]string{},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -391,36 +396,6 @@ func TestFeeds_ToMarketMap(t *testing.T) {
 					}))
 				}
 			}
-		})
-	}
-}
-
-func TestFeeds_ToMarketMap_Empty(t *testing.T) {
-	tests := []struct {
-		name    string
-		f       types.Feeds
-		want    mmtypes.MarketMap
-		wantErr bool
-	}{
-		{
-			name: "empty feeds",
-			f:    types.Feeds{},
-			want: mmtypes.MarketMap{
-				Markets: make(map[string]mmtypes.Market),
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.f.ToMarketMap()
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
-			require.Equal(t, tt.want, got)
 		})
 	}
 }
