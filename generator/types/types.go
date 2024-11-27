@@ -266,7 +266,7 @@ func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 				// if this feed's ticker is longer (i.e. SPWN,UNISWAP,0XFOOBAR/USD vs. SPWN/USD)
 				// we set the feed's ticker to the shorter one.
 				if len(feed.Ticker.String()) > len(existingMarketTicker) {
-					// existing ticker is shorter, so we tack that one.
+					// existing ticker is shorter, so we take that one.
 					ticker = existingMarketTicker
 					// update the feed to use the shorter ticker.
 					newTicker, err := connecttypes.CurrencyPairFromString(ticker)
