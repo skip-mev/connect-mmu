@@ -151,6 +151,9 @@ func (i *Indexer) CacheQuotes(ctx context.Context, ids []int64) error {
 	return nil
 }
 
+// Quotes fetches the QuoteData for the given CMC IDs and returns them as a map.
+// If a desired ID is not returned, we fall back to individually fetch the data for the ID,
+// and return an error if that fails.
 func (i *Indexer) Quotes(ctx context.Context, ids []int64) (map[int64]QuoteData, error) {
 	i.logger.Debug("fetching quote data", zap.Any("cmc ids", ids))
 
