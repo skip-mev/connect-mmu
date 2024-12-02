@@ -160,7 +160,7 @@ func (i *Indexer) Quotes(ctx context.Context, ids []int64) (map[int64]QuoteData,
 		return nil, err
 	}
 
-	if err := resp.Status.Validate(); err != nil {
+	if err = resp.Status.Validate(); err != nil {
 		i.logger.Error("failed to validate response", zap.Error(err))
 		return nil, err
 	}
@@ -169,8 +169,12 @@ func (i *Indexer) Quotes(ctx context.Context, ids []int64) (map[int64]QuoteData,
 	for _, id := range ids {
 		data, ok := resp.Data[fmt.Sprintf("%d", id)]
 		if !ok {
-			i.logger.Error("desired symbol not found", zap.Int64("id", id))
-			return nil, fmt.Errorf("quote data not found for id %d", id)
+			i.logger.Error("desired symbol not found - retrying", zap.Int64("id", id))
+			data, err = i.Quote(ctx, id)
+			if err != nil {
+				i.logger.Error("unable to fetch quote data", zap.Int64("id", id), zap.Error(err))
+				return nil, fmt.Errorf("unable to fetch quote data for id %d: %w", id, err)
+			}
 		}
 		quotes[id] = data
 	}
