@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	types2 "github.com/skip-mev/connect/v2/pkg/types"
+	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
 	"go.uber.org/zap"
@@ -194,19 +194,19 @@ func appendIfNotExists(src []mmtypes.ProviderConfig, newConfigs []mmtypes.Provid
 	return appendedCfgs
 }
 
-func deconstructDeFiTicker(ticker string) (types2.CurrencyPair, error) {
+func deconstructDeFiTicker(ticker string) (connecttypes.CurrencyPair, error) {
 	baseQuoteSplit := strings.Split(ticker, "/")
 	if len(baseQuoteSplit) != 2 {
-		return types2.CurrencyPair{}, fmt.Errorf("ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS/QUOTE)", ticker)
+		return connecttypes.CurrencyPair{}, fmt.Errorf("ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS/QUOTE)", ticker)
 	}
 	quote := baseQuoteSplit[1]
 
 	baseVenueAddressSplit := strings.Split(baseQuoteSplit[0], ",")
 	if len(baseVenueAddressSplit) != 3 {
-		return types2.CurrencyPair{}, fmt.Errorf("base ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS)", ticker)
+		return connecttypes.CurrencyPair{}, fmt.Errorf("base ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS)", ticker)
 	}
 	base := baseVenueAddressSplit[0]
-	return types2.CurrencyPairFromString(base + "/" + quote)
+	return connecttypes.CurrencyPairFromString(base + "/" + quote)
 }
 
 func getCMCTickerMapping(mm mmtypes.MarketMap) (map[string][]string, error) {
