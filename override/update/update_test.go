@@ -9,6 +9,203 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+func TestMergeCMCIDMarkets(t *testing.T) {
+	tests := []struct {
+		name           string
+		mm             types.MarketMap
+		cmcIDToTickers map[string][]string
+		expected       types.MarketMap
+		expErr         bool
+	}{
+		{
+			name: "simple merge",
+			mm: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}}},
+				"FOO,UNISWAP,0XFOO/USD": {ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}}},
+			}},
+			cmcIDToTickers: map[string][]string{
+				"2": {"FOO/USD", "FOO,UNISWAP,0XFOO/USD"},
+			},
+			expected: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+						{Name: "uniswap"},
+					}},
+			}},
+		},
+		{
+			name: "defi merge",
+			mm: types.MarketMap{Markets: map[string]types.Market{
+				"FOO,UNISWAP,0XFOO/USD":   {ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}}},
+				"FOO,RAYDIUM,ABCDEFG/USD": {ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}}},
+			}},
+			cmcIDToTickers: map[string][]string{
+				"500": {"FOO,UNISWAP,0XFOO/USD", "FOO,RAYDIUM,ABCDEFG/USD"},
+			},
+			expected: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}, {Name: "raydium"}}},
+			}},
+		},
+		{
+			name: "no clobbered markets",
+			mm: types.MarketMap{Markets: map[string]types.Market{
+				"FOO,RAYDIUM,SLDKJFLKSDJF/USD": {ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}}},
+				"FOO/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}, {Name: "binance"}}},
+				"BAR/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}}},
+			}},
+			cmcIDToTickers: map[string][]string{
+				"10": {"FOO,RAYDIUM,SLDKJFLKSDJF/USD", "FOO/USD"},
+			},
+			expected: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}, {Name: "binance"}, {Name: "raydium"}},
+				},
+				"BAR/USD": {
+					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}},
+				},
+			}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := mergeCMCMIDMarkets(tc.mm, tc.cmcIDToTickers)
+			if tc.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.True(t, out.Equal(tc.expected), out)
+			}
+		})
+	}
+}
+
+func TestDeconstructDefiTicker(t *testing.T) {
+	tests := []struct {
+		name     string
+		ticker   string
+		expected string
+		expErr   bool
+	}{
+		{
+			name:     "valid ticker",
+			ticker:   "BLUE,RAYDIUM,CWQVQTKUH1IU8ZSFFFVAUXAVZLZQU1E8GYU5D6ECGBNE/USD",
+			expected: "BLUE/USD",
+		},
+		{
+			name:   "invalid ticker - no separator",
+			ticker: "BLUE,RAYDIUM,CWQVQTKUH1IU8ZSFFFVAUXAVZLZQU1E8GYU5D6ECGBNEUSD",
+			expErr: true,
+		},
+		{
+			name:   "invalid ticker - invalid parts",
+			ticker: "BLUE,RAY,DIUM,CWQVQTKUH1IU8ZSFFFVAUXAVZLZQU1E8GYU5D6ECGBNE/USD",
+			expErr: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			pair, err := deconstructDeFiTicker(tc.ticker)
+			if tc.expErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, pair.String())
+			}
+		})
+	}
+}
+
+func TestGetCMCIDMapping(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       types.MarketMap
+		expected map[string][]string
+	}{
+		{
+			name: "CMC IDs are extracted",
+			in: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO/USD": {
+						Ticker:          types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"32349\"}]}"},
+						ProviderConfigs: nil,
+					},
+					"FOO,UNISWAP,0XFOO/USD": {
+						Ticker: types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"32349\"}]}"},
+					},
+					"BAR/USD": {
+						Ticker: types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"},
+					},
+					"BAZ/USD": {},
+				},
+			},
+			expected: map[string][]string{
+				"32349": {"FOO/USD", "FOO,UNISWAP,0XFOO/USD"},
+				"2":     {"BAR/USD"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := getCMCTickerMapping(tt.in)
+			require.NoError(t, err)
+			for id, tickers := range out {
+				expected, ok := tt.expected[id]
+				require.True(t, ok)
+				require.Equal(t, expected, tickers)
+			}
+		})
+	}
+}
+
+func TestAppendIfNotExists(t *testing.T) {
+	tests := []struct {
+		name       string
+		src        []types.ProviderConfig
+		newConfigs []types.ProviderConfig
+		expected   []types.ProviderConfig
+	}{
+		{
+			name: "provider configs appended",
+			src: []types.ProviderConfig{
+				{Name: "foo"},
+			},
+			newConfigs: []types.ProviderConfig{
+				{Name: "bar"},
+			},
+			expected: []types.ProviderConfig{
+				{Name: "foo"}, {Name: "bar"},
+			},
+		},
+		{
+			name:       "not appended if exists",
+			src:        []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
+			newConfigs: []types.ProviderConfig{{Name: "bar"}},
+			expected:   []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
+		},
+		{
+			name:       "empty appends all",
+			src:        []types.ProviderConfig{},
+			newConfigs: []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
+			expected:   []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
+		},
+	}\\
+
+}
+
 func TestCombineMarketMap(t *testing.T) {
 	tests := []struct {
 		name      string
