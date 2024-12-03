@@ -195,6 +195,9 @@ func appendIfNotExists(src []mmtypes.ProviderConfig, newConfigs []mmtypes.Provid
 	return appendedCfgs
 }
 
+// deconstructDeFiTicker deconstructs DeFi tickers into normal tickers.
+//
+// Example: BABY,RAYDIUM,5HMF8JT9PUWOQIFQTB3VR22732ZTKYRLRW9VO7TN3RCZ/USD -> BABY/USD
 func deconstructDeFiTicker(ticker string) (connecttypes.CurrencyPair, error) {
 	baseQuoteSplit := strings.Split(ticker, "/")
 	if len(baseQuoteSplit) != 2 {
@@ -210,6 +213,7 @@ func deconstructDeFiTicker(ticker string) (connecttypes.CurrencyPair, error) {
 	return connecttypes.CurrencyPairFromString(base + "/" + quote)
 }
 
+// getCMCTickerMapping extracts a mapping of cmc ID's to tickers from the marketmap.
 func getCMCTickerMapping(mm mmtypes.MarketMap) (map[string][]string, error) {
 	cmcIDToTickers := make(map[string][]string)
 	for ticker, market := range mm.Markets {
