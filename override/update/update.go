@@ -102,6 +102,7 @@ func CombineMarketMaps(
 		}
 	}
 
+	// combine any markets that have the same CMC ID but are separated.
 	cmcIDToTickers, err := getCMCTickerMapping(combined)
 	if err != nil {
 		return mmtypes.MarketMap{}, err
