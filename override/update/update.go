@@ -118,15 +118,20 @@ var (
 	defiTickerMatcher = regexp.MustCompile(`^[A-Z]+,[^/]+/USD$`)
 )
 
+// mergeCMCMIDMarkets merges markets that have the same CMC ID in their ticker metadata.
 func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string) (mmtypes.MarketMap, error) {
-	// check all CMC_ID's and see if we can combine any markets.
 	for _, tickers := range cmcIDToTickers {
+		// if there is only one ticker for this ID, we don't need to do anything.
 		if len(tickers) <= 1 {
 			continue
 		}
+
+		// keep track of the defi tickers we've seen, as well as the shortest ticker.
+		// we do this so we can know if we:
+		// 1. need to merge a defi set into a single set (i.e uniswap + raydium into one market)
+		// 2. need to merge a mixed set into a single set (i.e. uniswap, coinbase, etc into one market).
 		defiTickers := 0
 		shortestTicker := tickers[0]
-		// count the defi tickers and keep track of the shortest ticker.
 		for _, ticker := range tickers {
 			if defiTickerMatcher.MatchString(ticker) {
 				defiTickers++
@@ -135,16 +140,18 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 				shortestTicker = ticker
 			}
 		}
+
 		// if all tickers are defi tickers, we need to
-		// deconstruct the ticker and merge the markets.
+		// deconstruct the ticker and merge all markets into the deconstructed ticker.
 		if defiTickers == len(tickers) {
-			mergeMarketTicker := tickers[0]
+			mergeMarketTicker := tickers[0] // we can just choose the first market to be the merger.
 			deconstructedTicker, err := deconstructDeFiTicker(mergeMarketTicker)
 			if err != nil {
 				return mmtypes.MarketMap{}, fmt.Errorf("failed to deconstruct defi ticker: %w", err)
 			}
+			// check to make sure the deconstructed ticker doesn't already exist.
 			if _, ok := mm.Markets[deconstructedTicker.String()]; ok {
-				return mmtypes.MarketMap{}, fmt.Errorf("duplicate tickers found without matching CMC ID's: %q", deconstructedTicker.String())
+				return mmtypes.MarketMap{}, fmt.Errorf("duplicate tickers found while attemtping to match CMC ID's: %q", deconstructedTicker.String())
 			}
 			newMarket := mm.Markets[mergeMarketTicker]
 			newMarket.Ticker.CurrencyPair = deconstructedTicker
@@ -153,8 +160,9 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 				newMarket.ProviderConfigs = appendIfNotExists(newMarket.ProviderConfigs, mm.Markets[tickers[i]].ProviderConfigs)
 				delete(mm.Markets, tickers[i])
 			}
+			// set this new market into the map.
 			mm.Markets[deconstructedTicker.String()] = newMarket
-			delete(mm.Markets, tickers[0])
+			delete(mm.Markets, tickers[0]) // remove the original defi market.
 		} else {
 			// otherwise, just take the shortest ticker we saw, and merge the others into it.
 			consolidatedMarket := mm.Markets[shortestTicker]
@@ -174,10 +182,12 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 
 // appendIfNotExists appends the config in newConfigs if it does not exist in src.
 func appendIfNotExists(src []mmtypes.ProviderConfig, newConfigs []mmtypes.ProviderConfig) []mmtypes.ProviderConfig {
-	appendedCfgs := make([]mmtypes.ProviderConfig, 0, len(src))
+	appendedCfgs := make([]mmtypes.ProviderConfig, len(src))
 	copy(appendedCfgs, src)
 	for _, newConfig := range newConfigs {
-		if !slices.Contains(src, newConfig) {
+		if !slices.ContainsFunc(src, func(config mmtypes.ProviderConfig) bool {
+			return config.Name == newConfig.Name
+		}) {
 			appendedCfgs = append(appendedCfgs, newConfig)
 		}
 	}

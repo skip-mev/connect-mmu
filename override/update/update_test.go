@@ -179,16 +179,10 @@ func TestAppendIfNotExists(t *testing.T) {
 		expected   []types.ProviderConfig
 	}{
 		{
-			name: "provider configs appended",
-			src: []types.ProviderConfig{
-				{Name: "foo"},
-			},
-			newConfigs: []types.ProviderConfig{
-				{Name: "bar"},
-			},
-			expected: []types.ProviderConfig{
-				{Name: "foo"}, {Name: "bar"},
-			},
+			name:       "provider configs appended",
+			src:        []types.ProviderConfig{{Name: "foo"}},
+			newConfigs: []types.ProviderConfig{{Name: "bar"}},
+			expected:   []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
 		},
 		{
 			name:       "not appended if exists",
@@ -202,8 +196,14 @@ func TestAppendIfNotExists(t *testing.T) {
 			newConfigs: []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
 			expected:   []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
 		},
-	}\\
+	}
 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			out := appendIfNotExists(tc.src, tc.newConfigs)
+			require.Equal(t, tc.expected, out)
+		})
+	}
 }
 
 func TestCombineMarketMap(t *testing.T) {
