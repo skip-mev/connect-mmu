@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
@@ -125,18 +126,12 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 			continue
 		}
 
-		// keep track of the number of defi tickers we've seen, as well as the shortest ticker string.
-		// we do this so we know if we need to:
-		// 1. merge an exclusive defi set into a single set (i.e uniswap + raydium into one market)
-		// 2. merge a mixed set into a single set (i.e. uniswap + coinbase into one market).
+		// keep track of the number of defi tickers we've seen. we do this so we know if we need to merge an
+		// exclusive defi set into a single set (i.e uniswap + raydium into one market)
 		defiTickers := 0
-		shortestTicker := tickers[0]
 		for _, ticker := range tickers {
 			if defiTickerMatcher.MatchString(ticker) {
 				defiTickers++
-			}
-			if len(ticker) < len(shortestTicker) {
-				shortestTicker = ticker
 			}
 		}
 
@@ -163,17 +158,19 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 			mm.Markets[deconstructedTicker.String()] = newMarket
 			delete(mm.Markets, tickers[0]) // remove the original defi market.
 		} else {
-			// otherwise, just take the shortest ticker we saw, and merge the others into it.
-			consolidatedMarket := mm.Markets[shortestTicker]
-			for _, ticker := range tickers {
-				if ticker == shortestTicker {
-					continue
-				}
+			// sort the tickers by length.
+			// we will merge all ticker's providers into tickers[0].
+			sort.Slice(tickers, func(i, j int) bool {
+				return len(tickers[i]) < len(tickers[j])
+			})
+			consolidatedMarket := mm.Markets[tickers[0]]
+			for i := 1; i < len(tickers); i++ {
+				ticker := tickers[i]
 				otherMarket := mm.Markets[ticker]
 				consolidatedMarket.ProviderConfigs = appendIfNotExists(consolidatedMarket.ProviderConfigs, otherMarket.ProviderConfigs)
 				delete(mm.Markets, ticker)
 			}
-			mm.Markets[shortestTicker] = consolidatedMarket
+			mm.Markets[tickers[0]] = consolidatedMarket
 		}
 	}
 	return mm, nil
