@@ -1,9 +1,22 @@
 package update
 
 import (
+	"encoding/json"
+	"fmt"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+
+	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
+	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
 	"go.uber.org/zap"
+
+	"github.com/skip-mev/connect-mmu/generator/types"
 )
+
+var defiTickerMatcher = regexp.MustCompile(`^[A-Z]+,[^/]+/USD$`)
 
 type Options struct {
 	UpdateEnabled      bool
@@ -79,6 +92,9 @@ func CombineMarketMaps(
 			// if not found in the on chain marketmap, add, but disable
 			market.Ticker.Enabled = false
 		}
+		slices.SortFunc(market.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+			return strings.Compare(a.Name, b.Name)
+		})
 		combined.Markets[ticker] = market
 	}
 
@@ -92,7 +108,133 @@ func CombineMarketMaps(
 		}
 	}
 
-	return combined, nil
+	// combine any markets that have the same CMC ID but are separated.
+	cmcIDToTickers, err := getCMCTickerMapping(combined)
+	if err != nil {
+		return mmtypes.MarketMap{}, err
+	}
+	merged, err := mergeCMCMIDMarkets(combined, cmcIDToTickers)
+	if err != nil {
+		return mmtypes.MarketMap{}, err
+	}
+
+	return merged, nil
+}
+
+// mergeCMCMIDMarkets merges markets that have the same CMC ID in their ticker metadata.
+func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string) (mmtypes.MarketMap, error) {
+	for _, tickers := range cmcIDToTickers {
+		// if there is only one ticker for this ID, we don't need to do anything.
+		if len(tickers) <= 1 {
+			continue
+		}
+
+		// keep track of the number of defi tickers we've seen. we do this so we know if we need to merge an
+		// exclusive defi set into a single set (i.e uniswap + raydium into one market)
+		defiTickers := 0
+		for _, ticker := range tickers {
+			if defiTickerMatcher.MatchString(ticker) {
+				defiTickers++
+			}
+		}
+
+		// if all tickers are defi tickers, we need to
+		// deconstruct the ticker and merge all markets into the deconstructed ticker.
+		if defiTickers == len(tickers) {
+			mergeMarketTicker := tickers[0] // we can just choose the first market to be the merger.
+			deconstructedTicker, err := deconstructDeFiTicker(mergeMarketTicker)
+			if err != nil {
+				return mmtypes.MarketMap{}, fmt.Errorf("failed to deconstruct defi ticker: %w", err)
+			}
+			// check to make sure the deconstructed ticker doesn't already exist.
+			if _, ok := mm.Markets[deconstructedTicker.String()]; ok {
+				return mmtypes.MarketMap{}, fmt.Errorf("duplicate tickers found while attempting to match CMC ID's: %q", deconstructedTicker.String())
+			}
+			newMarket := mm.Markets[mergeMarketTicker]
+			newMarket.Ticker.CurrencyPair = deconstructedTicker
+			// append the provider configs, and then remove the market from the map.
+			for i := 1; i < len(tickers); i++ {
+				newMarket.ProviderConfigs = appendIfNotExists(newMarket.ProviderConfigs, mm.Markets[tickers[i]].ProviderConfigs)
+				delete(mm.Markets, tickers[i])
+			}
+			// set this new market into the map.
+			slices.SortFunc(newMarket.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+				return strings.Compare(a.Name, b.Name)
+			})
+			mm.Markets[deconstructedTicker.String()] = newMarket
+			delete(mm.Markets, tickers[0]) // remove the original defi market.
+		} else {
+			// sort the tickers by length.
+			// we will merge all ticker's providers into tickers[0].
+			sort.Slice(tickers, func(i, j int) bool {
+				return len(tickers[i]) < len(tickers[j])
+			})
+			mergeTicker := tickers[0]
+			consolidatedMarket := mm.Markets[mergeTicker]
+			for i := 1; i < len(tickers); i++ {
+				ticker := tickers[i]
+				otherMarket := mm.Markets[ticker]
+				consolidatedMarket.ProviderConfigs = appendIfNotExists(consolidatedMarket.ProviderConfigs, otherMarket.ProviderConfigs)
+				delete(mm.Markets, ticker)
+			}
+			slices.SortFunc(consolidatedMarket.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+				return strings.Compare(a.Name, b.Name)
+			})
+			mm.Markets[mergeTicker] = consolidatedMarket
+		}
+	}
+	return mm, nil
+}
+
+// appendIfNotExists appends the config in newConfigs if it does not exist in src.
+func appendIfNotExists(src []mmtypes.ProviderConfig, newConfigs []mmtypes.ProviderConfig) []mmtypes.ProviderConfig {
+	appendedCfgs := make([]mmtypes.ProviderConfig, len(src))
+	copy(appendedCfgs, src)
+	for _, newConfig := range newConfigs {
+		if !slices.ContainsFunc(src, func(config mmtypes.ProviderConfig) bool {
+			return config.Name == newConfig.Name
+		}) {
+			appendedCfgs = append(appendedCfgs, newConfig)
+		}
+	}
+	return appendedCfgs
+}
+
+// deconstructDeFiTicker deconstructs DeFi tickers into normal tickers.
+//
+// Example: BABY,RAYDIUM,5HMF8JT9PUWOQIFQTB3VR22732ZTKYRLRW9VO7TN3RCZ/USD -> BABY/USD
+func deconstructDeFiTicker(ticker string) (connecttypes.CurrencyPair, error) {
+	split := strings.Split(ticker, "/")
+	if len(split) != 2 {
+		return connecttypes.CurrencyPair{}, fmt.Errorf("invalid defi ticker format: %s", ticker)
+	}
+	base, _, _, err := connecttypes.SplitDefiAssetString(split[0])
+	if err != nil {
+		return connecttypes.CurrencyPair{}, err
+	}
+	quote := split[1]
+
+	return connecttypes.CurrencyPairFromString(base + "/" + quote)
+}
+
+// getCMCTickerMapping extracts a mapping of cmc ID's to tickers from the marketmap.
+func getCMCTickerMapping(mm mmtypes.MarketMap) (map[string][]string, error) {
+	cmcIDToTickers := make(map[string][]string)
+	for ticker, market := range mm.Markets {
+		if market.Ticker.Metadata_JSON != "" {
+			var md tickermetadata.CoreMetadata
+			if err := json.Unmarshal([]byte(market.Ticker.Metadata_JSON), &md); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal market metadata for %q: %w", ticker, err)
+			}
+			for _, aggID := range md.AggregateIDs {
+				if aggID.Venue == types.VenueCoinMarketcap {
+					cmcIDToTickers[aggID.ID] = append(cmcIDToTickers[aggID.ID], ticker)
+					break
+				}
+			}
+		}
+	}
+	return cmcIDToTickers, nil
 }
 
 func appendToProviders(actual, generated mmtypes.Market) []mmtypes.ProviderConfig {
