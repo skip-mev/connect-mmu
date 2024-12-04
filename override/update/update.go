@@ -125,10 +125,10 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 			continue
 		}
 
-		// keep track of the defi tickers we've seen, as well as the shortest ticker.
-		// we do this so we can know if we:
-		// 1. need to merge a defi set into a single set (i.e uniswap + raydium into one market)
-		// 2. need to merge a mixed set into a single set (i.e. uniswap, coinbase, etc into one market).
+		// keep track of the number of defi tickers we've seen, as well as the shortest ticker string.
+		// we do this so we know if we need to:
+		// 1. merge an exclusive defi set into a single set (i.e uniswap + raydium into one market)
+		// 2. merge a mixed set into a single set (i.e. uniswap + coinbase into one market).
 		defiTickers := 0
 		shortestTicker := tickers[0]
 		for _, ticker := range tickers {
