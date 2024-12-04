@@ -1,7 +1,6 @@
 package update
 
 import (
-	"fmt"
 	"testing"
 
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
@@ -142,16 +141,6 @@ func TestDeconstructDefiTicker(t *testing.T) {
 	}
 }
 
-func TestThing(t *testing.T) {
-	defi := "BLUE,RAYDIUM,CWQVQTKUH1IU8ZSFFFVAUXAVZLZQU1E8GYU5D6ECGBNE/USD"
-	token, addr, chID, err := connecttypes.SplitDefiAssetString(defi)
-	require.NoError(t, err)
-
-	fmt.Println(token)
-	fmt.Println(addr)
-	fmt.Println(chID)
-}
-
 func TestGetCMCIDMapping(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -231,6 +220,9 @@ func TestAppendIfNotExists(t *testing.T) {
 }
 
 func TestCombineMarketMap(t *testing.T) {
+	cmcID1 := "{\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"1\"}]}"
+	cmcID2 := "{\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"
+	cmcID3 := "{\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"3\"}]}"
 	tests := []struct {
 		name      string
 		actual    types.MarketMap
@@ -239,6 +231,69 @@ func TestCombineMarketMap(t *testing.T) {
 		want      types.MarketMap
 		wantErr   bool
 	}{
+		{
+			name: "CMC ID match markets consolidate",
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}, Metadata_JSON: cmcID1},
+						ProviderConfigs: []types.ProviderConfig{{Name: "foo"}, {Name: "bar"}},
+					},
+					"BUX/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BUX", Quote: "USD"}, Metadata_JSON: cmcID3},
+						ProviderConfigs: []types.ProviderConfig{{Name: "bux"}},
+					},
+					"BAR,UNISWAP,0XFOOBAR/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR,UNISWAP,0XFOOBAR", Quote: "USD"}, Metadata_JSON: cmcID2},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+					"BAZ/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAZ", Quote: "USD"}},
+						ProviderConfigs: []types.ProviderConfig{{Name: "foo"}},
+					},
+				},
+			},
+			generated: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BUX/USD": { // should merge with non-defi market above
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BUX", Quote: "USD"}, Metadata_JSON: cmcID3},
+						ProviderConfigs: []types.ProviderConfig{{Name: "baz"}},
+					},
+					"FOO/USD": { // should merge into non defi market above
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}, Metadata_JSON: cmcID1},
+						ProviderConfigs: []types.ProviderConfig{{Name: "baz"}},
+					},
+					"FOO,UNISWAP,0XFOOBAR/USD": { // should consolidate with non-defi market above
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO,UNISWAP,0XFOOBAR", Quote: "USD"}, Metadata_JSON: cmcID1},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+					"BAR,RAYDIUM,0XFOOBAR/USD": { // should merge with other defi market above.
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR,RAYDIUM,0XFOOBAR", Quote: "USD"}, Metadata_JSON: cmcID2},
+						ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}},
+					},
+				},
+			},
+			want: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}, Metadata_JSON: cmcID1},
+						ProviderConfigs: []types.ProviderConfig{{Name: "bar"}, {Name: "baz"}, {Name: "foo"}, {Name: "uniswap"}},
+					},
+					"BAZ/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAZ", Quote: "USD"}},
+						ProviderConfigs: []types.ProviderConfig{{Name: "foo"}},
+					},
+					"BAR/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}, Metadata_JSON: cmcID2},
+						ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}, {Name: "uniswap"}},
+					},
+					"BUX/USD": {
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BUX", Quote: "USD"}, Metadata_JSON: cmcID3},
+						ProviderConfigs: []types.ProviderConfig{{Name: "bux"}, {Name: "baz"}},
+					},
+				},
+			},
+		},
 		{
 			name: "do nothing for empty - nil",
 			want: types.MarketMap{

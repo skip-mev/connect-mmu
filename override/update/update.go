@@ -155,6 +155,9 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 				delete(mm.Markets, tickers[i])
 			}
 			// set this new market into the map.
+			slices.SortFunc(newMarket.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+				return strings.Compare(a.Name, b.Name)
+			})
 			mm.Markets[deconstructedTicker.String()] = newMarket
 			delete(mm.Markets, tickers[0]) // remove the original defi market.
 		} else {
@@ -171,6 +174,9 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 				consolidatedMarket.ProviderConfigs = appendIfNotExists(consolidatedMarket.ProviderConfigs, otherMarket.ProviderConfigs)
 				delete(mm.Markets, ticker)
 			}
+			slices.SortFunc(consolidatedMarket.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+				return strings.Compare(a.Name, b.Name)
+			})
 			mm.Markets[mergeTicker] = consolidatedMarket
 		}
 	}
