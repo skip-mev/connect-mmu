@@ -163,14 +163,15 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 			sort.Slice(tickers, func(i, j int) bool {
 				return len(tickers[i]) < len(tickers[j])
 			})
-			consolidatedMarket := mm.Markets[tickers[0]]
+			mergeTicker := tickers[0]
+			consolidatedMarket := mm.Markets[mergeTicker]
 			for i := 1; i < len(tickers); i++ {
 				ticker := tickers[i]
 				otherMarket := mm.Markets[ticker]
 				consolidatedMarket.ProviderConfigs = appendIfNotExists(consolidatedMarket.ProviderConfigs, otherMarket.ProviderConfigs)
 				delete(mm.Markets, ticker)
 			}
-			mm.Markets[tickers[0]] = consolidatedMarket
+			mm.Markets[mergeTicker] = consolidatedMarket
 		}
 	}
 	return mm, nil
