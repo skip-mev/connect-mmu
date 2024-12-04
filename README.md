@@ -91,7 +91,7 @@ The `generate` job converts provider data into a market map—a collection of ba
 Validates configurations and generated market maps. This helps ensure configurations are correct and identifies any transient failures (e.g., API downtime).
 
 ```bash
-# Clone the Connect repository and checkout branch v1.0.13
+# Clone the Connect repository and checkout the branch or tag you want to install
 # Run make install-sentry and add the go binard directory to your shell's PATH
 # Run `make install` in the Connect repository and link to Go environment
 # sentry in validator/cmd/sentry
