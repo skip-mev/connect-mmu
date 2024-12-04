@@ -15,6 +15,8 @@ import (
 	"github.com/skip-mev/connect-mmu/generator/types"
 )
 
+var defiTickerMatcher = regexp.MustCompile(`^[A-Z]+,[^/]+/USD$`)
+
 type Options struct {
 	UpdateEnabled      bool
 	OverwriteProviders bool
@@ -115,10 +117,6 @@ func CombineMarketMaps(
 	return merged, nil
 }
 
-var (
-	defiTickerMatcher = regexp.MustCompile(`^[A-Z]+,[^/]+/USD$`)
-)
-
 // mergeCMCMIDMarkets merges markets that have the same CMC ID in their ticker metadata.
 func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string) (mmtypes.MarketMap, error) {
 	for _, tickers := range cmcIDToTickers {
@@ -152,7 +150,7 @@ func mergeCMCMIDMarkets(mm mmtypes.MarketMap, cmcIDToTickers map[string][]string
 			}
 			// check to make sure the deconstructed ticker doesn't already exist.
 			if _, ok := mm.Markets[deconstructedTicker.String()]; ok {
-				return mmtypes.MarketMap{}, fmt.Errorf("duplicate tickers found while attemtping to match CMC ID's: %q", deconstructedTicker.String())
+				return mmtypes.MarketMap{}, fmt.Errorf("duplicate tickers found while attempting to match CMC ID's: %q", deconstructedTicker.String())
 			}
 			newMarket := mm.Markets[mergeMarketTicker]
 			newMarket.Ticker.CurrencyPair = deconstructedTicker

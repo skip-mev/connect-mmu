@@ -22,7 +22,8 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 			mm: types.MarketMap{Markets: map[string]types.Market{
 				"FOO/USD": {
 					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
-					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}},
+				},
 				"FOO,UNISWAP,0XFOO/USD": {ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}}},
 			}},
 			cmcIDToTickers: map[string][]string{
@@ -34,7 +35,8 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 					ProviderConfigs: []types.ProviderConfig{
 						{Name: "coinbase"},
 						{Name: "uniswap"},
-					}},
+					},
+				},
 			}},
 		},
 		{
@@ -48,8 +50,12 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 			},
 			expected: types.MarketMap{Markets: map[string]types.Market{
 				"FOO/USD": {
-					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
-					ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}, {Name: "raydium"}}},
+					Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "uniswap"},
+						{Name: "raydium"},
+					},
+				},
 			}},
 		},
 		{
@@ -57,11 +63,18 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 			mm: types.MarketMap{Markets: map[string]types.Market{
 				"FOO,RAYDIUM,SLDKJFLKSDJF/USD": {ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}}},
 				"FOO/USD": {
-					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
-					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}, {Name: "binance"}}},
+					Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+						{Name: "binance"},
+					},
+				},
 				"BAR/USD": {
-					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}},
-					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}}},
+					Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+					},
+				},
 			}},
 			cmcIDToTickers: map[string][]string{
 				"10": {"FOO,RAYDIUM,SLDKJFLKSDJF/USD", "FOO/USD"},
