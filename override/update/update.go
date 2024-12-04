@@ -195,17 +195,16 @@ func appendIfNotExists(src []mmtypes.ProviderConfig, newConfigs []mmtypes.Provid
 //
 // Example: BABY,RAYDIUM,5HMF8JT9PUWOQIFQTB3VR22732ZTKYRLRW9VO7TN3RCZ/USD -> BABY/USD
 func deconstructDeFiTicker(ticker string) (connecttypes.CurrencyPair, error) {
-	baseQuoteSplit := strings.Split(ticker, "/")
-	if len(baseQuoteSplit) != 2 {
-		return connecttypes.CurrencyPair{}, fmt.Errorf("ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS/QUOTE)", ticker)
+	split := strings.Split(ticker, "/")
+	if len(split) != 2 {
+		return connecttypes.CurrencyPair{}, fmt.Errorf("invalid defi ticker format: %s", ticker)
 	}
-	quote := baseQuoteSplit[1]
+	base, _, _, err := connecttypes.SplitDefiAssetString(split[0])
+	if err != nil {
+		return connecttypes.CurrencyPair{}, err
+	}
+	quote := split[1]
 
-	baseVenueAddressSplit := strings.Split(baseQuoteSplit[0], ",")
-	if len(baseVenueAddressSplit) != 3 {
-		return connecttypes.CurrencyPair{}, fmt.Errorf("base ticker %q is not valid defi ticker format (BASE,VENUE,ADDRESS)", ticker)
-	}
-	base := baseVenueAddressSplit[0]
 	return connecttypes.CurrencyPairFromString(base + "/" + quote)
 }
 

@@ -1,6 +1,7 @@
 package update
 
 import (
+	"fmt"
 	"testing"
 
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
@@ -139,6 +140,16 @@ func TestDeconstructDefiTicker(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestThing(t *testing.T) {
+	defi := "BLUE,RAYDIUM,CWQVQTKUH1IU8ZSFFFVAUXAVZLZQU1E8GYU5D6ECGBNE/USD"
+	token, addr, chID, err := connecttypes.SplitDefiAssetString(defi)
+	require.NoError(t, err)
+
+	fmt.Println(token)
+	fmt.Println(addr)
+	fmt.Println(chID)
 }
 
 func TestGetCMCIDMapping(t *testing.T) {
