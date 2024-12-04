@@ -7,8 +7,6 @@ import (
 	"github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
-
-	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
 func TestMergeCMCIDMarkets(t *testing.T) {
@@ -54,8 +52,8 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 				"FOO/USD": {
 					Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
 					ProviderConfigs: []types.ProviderConfig{
-						{Name: "uniswap"},
 						{Name: "raydium"},
+						{Name: "uniswap"},
 					},
 				},
 			}},
@@ -84,7 +82,7 @@ func TestMergeCMCIDMarkets(t *testing.T) {
 			expected: types.MarketMap{Markets: map[string]types.Market{
 				"FOO/USD": {
 					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "USD"}},
-					ProviderConfigs: []types.ProviderConfig{{Name: "coinbase"}, {Name: "binance"}, {Name: "raydium"}},
+					ProviderConfigs: []types.ProviderConfig{{Name: "binance"}, {Name: "coinbase"}, {Name: "raydium"}},
 				},
 				"BAR/USD": {
 					Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}},
@@ -827,8 +825,6 @@ func TestCombineMarketMap(t *testing.T) {
 				return
 			}
 
-			file.WriteJSONToFile(got, "got.json")
-			file.WriteJSONToFile(tt.want, "want.json")
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
 		})
