@@ -92,6 +92,9 @@ func CombineMarketMaps(
 			// if not found in the on chain marketmap, add, but disable
 			market.Ticker.Enabled = false
 		}
+		slices.SortFunc(market.ProviderConfigs, func(a, b mmtypes.ProviderConfig) int {
+			return strings.Compare(a.Name, b.Name)
+		})
 		combined.Markets[ticker] = market
 	}
 

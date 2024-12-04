@@ -7,6 +7,8 @@ import (
 	"github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+
+	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
 func TestMergeCMCIDMarkets(t *testing.T) {
@@ -247,7 +249,7 @@ func TestCombineMarketMap(t *testing.T) {
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR,UNISWAP,0XFOOBAR", Quote: "USD"}, Metadata_JSON: cmcID2},
 						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
 					},
-					"BAZ/USD": {
+					"BAZ/USD": { // non cmc id should just match on ticker..
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAZ", Quote: "USD"}},
 						ProviderConfigs: []types.ProviderConfig{{Name: "foo"}},
 					},
@@ -271,6 +273,10 @@ func TestCombineMarketMap(t *testing.T) {
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR,RAYDIUM,0XFOOBAR", Quote: "USD"}, Metadata_JSON: cmcID2},
 						ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}},
 					},
+					"BAZ/USD": { // this non-cmc ID market should just merge into the above one based on ticker.
+						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAZ", Quote: "USD"}},
+						ProviderConfigs: []types.ProviderConfig{{Name: "bar"}},
+					},
 				},
 			},
 			want: types.MarketMap{
@@ -281,7 +287,7 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 					"BAZ/USD": {
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAZ", Quote: "USD"}},
-						ProviderConfigs: []types.ProviderConfig{{Name: "foo"}},
+						ProviderConfigs: []types.ProviderConfig{{Name: "bar"}, {Name: "foo"}},
 					},
 					"BAR/USD": {
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BAR", Quote: "USD"}, Metadata_JSON: cmcID2},
@@ -289,7 +295,7 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 					"BUX/USD": {
 						Ticker:          types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "BUX", Quote: "USD"}, Metadata_JSON: cmcID3},
-						ProviderConfigs: []types.ProviderConfig{{Name: "bux"}, {Name: "baz"}},
+						ProviderConfigs: []types.ProviderConfig{{Name: "baz"}, {Name: "bux"}},
 					},
 				},
 			},
@@ -821,6 +827,8 @@ func TestCombineMarketMap(t *testing.T) {
 				return
 			}
 
+			file.WriteJSONToFile(got, "got.json")
+			file.WriteJSONToFile(tt.want, "want.json")
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
 		})
