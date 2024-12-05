@@ -46,6 +46,16 @@ func TestTransactionConfig_ValidateBasic(t *testing.T) {
 			err: config.ErrInvalidTxFee,
 		},
 		{
+			name: "invalid gas adjustment",
+			cfg: config.TransactionConfig{
+				MaxBytesPerTx: 1,
+				MaxGas:        1,
+				GasAdjustment: 0.5,
+				MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
+			},
+			err: config.ErrInvalidGasAdjustment,
+		},
+		{
 			name: "valid",
 			cfg: config.TransactionConfig{
 				MaxBytesPerTx: 1,

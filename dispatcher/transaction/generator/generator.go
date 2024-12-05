@@ -62,7 +62,7 @@ func (c *coreGenerator) estimateUnsignedTx(
 	txf = txf.WithTxConfig(c.sdkTxConfig)
 
 	c.logger.Info("estimating transaction and gas")
-	gas, err := c.gasEstimator.Estimate(txf, []sdk.Msg{msg})
+	gas, err := c.gasEstimator.Estimate(txf, []sdk.Msg{msg}, c.txConfig.GasAdjustment)
 	if err != nil {
 		return nil, fmt.Errorf("failed to estimate gas: %w", err)
 	}
