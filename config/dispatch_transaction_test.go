@@ -21,6 +21,7 @@ func TestTransactionConfig_ValidateBasic(t *testing.T) {
 			cfg: config.TransactionConfig{
 				MaxBytesPerTx: 0,
 				MaxGas:        100,
+				GasAdjustment: 1.5,
 				MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 			},
 			err: config.ErrInvalidMaxBytesPerTx,
@@ -30,6 +31,7 @@ func TestTransactionConfig_ValidateBasic(t *testing.T) {
 			cfg: config.TransactionConfig{
 				MaxBytesPerTx: 1,
 				MaxGas:        0,
+				GasAdjustment: 1.5,
 				MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 			},
 			err: config.ErrInvalidMaxGas,
@@ -39,6 +41,7 @@ func TestTransactionConfig_ValidateBasic(t *testing.T) {
 			cfg: config.TransactionConfig{
 				MaxBytesPerTx: 1,
 				MaxGas:        1,
+				GasAdjustment: 1.5,
 				MinGasPrice: sdk.DecCoin{
 					Denom: "",
 				},
@@ -60,6 +63,7 @@ func TestTransactionConfig_ValidateBasic(t *testing.T) {
 			cfg: config.TransactionConfig{
 				MaxBytesPerTx: 1,
 				MaxGas:        1,
+				GasAdjustment: 1.5,
 				MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 			},
 			err: nil,
