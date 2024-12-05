@@ -18,8 +18,6 @@ import (
 
 // TransactionGenerator handles the process of transforming a set of Markets in to a
 // transaction that creates a set of upserts.
-//
-//go:generate mockery --name=TransactionGenerator --filename=mock_tx_generator.go --case=underscore
 type TransactionGenerator interface {
 	// GenerateTransactions returns a set of transactions to upsert a set of markets.
 	GenerateTransactions(ctx context.Context, msgs []sdk.Msg) ([]cmttypes.Tx, error)
