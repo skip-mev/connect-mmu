@@ -10,9 +10,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// gasAdjust is the amount to multiply estimated gas by to account for "headroom" for tx inclusion.
-const gasAdjust = 1.5
-
 type SimulationGasEstimator struct {
 	conn   *grpc.ClientConn
 	logger *zap.Logger
@@ -32,7 +29,7 @@ func (s *SimulationGasEstimator) Estimate(txf tx.Factory, msgs []sdk.Msg, gasAdj
 	if s.conn == nil {
 		return 0, fmt.Errorf("grpc conn not initialized")
 	}
-	
+
 	if gasAdjust < 1 {
 		return 0, fmt.Errorf("gasAdjust must be >= 1")
 	}
