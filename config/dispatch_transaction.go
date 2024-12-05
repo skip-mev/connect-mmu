@@ -65,5 +65,5 @@ var (
 	// ErrInvalidTxFee is thrown when the tx fee is invalid.
 	ErrInvalidTxFee = errors.New("tx fee must be greater than or equal to 0")
 
-	ErrInvalidGasAdjustment = errors.New("gas adjustment must be greater than or equal to 0")
+	ErrInvalidGasAdjustment = errors.New("gas adjustment must be greater than or equal to 1")
 )
