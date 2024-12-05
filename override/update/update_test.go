@@ -1,6 +1,7 @@
 package update
 
 import (
+	"slices"
 	"testing"
 
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
@@ -178,6 +179,8 @@ func TestGetCMCIDMapping(t *testing.T) {
 			for id, tickers := range out {
 				expected, ok := tt.expected[id]
 				require.True(t, ok)
+				slices.Sort(expected)
+				slices.Sort(tickers)
 				require.Equal(t, expected, tickers)
 			}
 		})
