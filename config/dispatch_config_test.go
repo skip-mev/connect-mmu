@@ -10,7 +10,7 @@ import (
 	"github.com/skip-mev/connect-mmu/config"
 )
 
-func TestConfig_ValidateOverwrite(t *testing.T) {
+func TestConfig_Validate(t *testing.T) {
 	dummySigningConfig := config.SigningConfig{
 		Type:   "foo",
 		Config: map[string]any{"foo": "bar"},
@@ -32,6 +32,7 @@ func TestConfig_ValidateOverwrite(t *testing.T) {
 				TxConfig: config.TransactionConfig{
 					MaxBytesPerTx: 1,
 					MaxGas:        1,
+					GasAdjustment: 1.5,
 					MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 				},
 				SigningConfig:   dummySigningConfig,
@@ -45,6 +46,7 @@ func TestConfig_ValidateOverwrite(t *testing.T) {
 				TxConfig: config.TransactionConfig{
 					MaxBytesPerTx: 1,
 					MaxGas:        1,
+					GasAdjustment: 1.5,
 					MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 				},
 				SubmitterConfig: config.SubmitterConfig{PollingFrequency: 0},
@@ -57,6 +59,7 @@ func TestConfig_ValidateOverwrite(t *testing.T) {
 				TxConfig: config.TransactionConfig{
 					MaxBytesPerTx: 1,
 					MaxGas:        1,
+					GasAdjustment: 1.5,
 					MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 				},
 				SigningConfig:   dummySigningConfig,
@@ -70,6 +73,7 @@ func TestConfig_ValidateOverwrite(t *testing.T) {
 				TxConfig: config.TransactionConfig{
 					MaxBytesPerTx: 1,
 					MaxGas:        1,
+					GasAdjustment: 1.5,
 					MinGasPrice:   sdk.NewDecCoin("stake", math.NewInt(100)),
 				},
 				SigningConfig:   dummySigningConfig,
