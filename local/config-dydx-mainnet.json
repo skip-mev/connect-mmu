@@ -367,6 +367,7 @@
     "tx": {
       "max_bytes_per_tx": 100000,
       "max_gas": 800000000,
+      "gas_adjustment": 1.5,
       "min_gas_price": {
         "denom": "adydx",
         "amount": "20000000000.000000000000000000"

@@ -18,8 +18,6 @@ import (
 
 // TransactionGenerator handles the process of transforming a set of Markets in to a
 // transaction that creates a set of upserts.
-//
-//go:generate mockery --name=TransactionGenerator --filename=mock_tx_generator.go --case=underscore
 type TransactionGenerator interface {
 	// GenerateTransactions returns a set of transactions to upsert a set of markets.
 	GenerateTransactions(ctx context.Context, msgs []sdk.Msg) ([]cmttypes.Tx, error)
@@ -62,7 +60,7 @@ func (c *coreGenerator) estimateUnsignedTx(
 	txf = txf.WithTxConfig(c.sdkTxConfig)
 
 	c.logger.Info("estimating transaction and gas")
-	gas, err := c.gasEstimator.Estimate(txf, []sdk.Msg{msg})
+	gas, err := c.gasEstimator.Estimate(txf, []sdk.Msg{msg}, c.txConfig.GasAdjustment)
 	if err != nil {
 		return nil, fmt.Errorf("failed to estimate gas: %w", err)
 	}

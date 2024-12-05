@@ -15,6 +15,9 @@ type TransactionConfig struct {
 	// MaxGas is the maximum amount of gas allowed in a single transaction
 	MaxGas uint64 `json:"max_gas"`
 
+	// GasAdjustment is the gas adjustment multiplier to apply when estimating gas.
+	GasAdjustment float64 `json:"gas_adjustment"`
+
 	// MinGasPrice is the min gas prices used for the transaction
 	MinGasPrice sdk.DecCoin `json:"min_gas_price"`
 }
@@ -23,6 +26,7 @@ func DefaultTxConfig() TransactionConfig {
 	return TransactionConfig{
 		MaxBytesPerTx: 100000,
 		MaxGas:        800000000,
+		GasAdjustment: 1.5,
 		MinGasPrice: sdk.DecCoin{
 			Denom:  "utoken",
 			Amount: math.LegacyNewDec(20000000000),
@@ -44,6 +48,10 @@ func (c *TransactionConfig) ValidateBasic() error {
 		return ErrInvalidTxFee
 	}
 
+	if c.GasAdjustment < 1 {
+		return ErrInvalidGasAdjustment
+	}
+
 	return nil
 }
 
@@ -56,4 +64,6 @@ var (
 
 	// ErrInvalidTxFee is thrown when the tx fee is invalid.
 	ErrInvalidTxFee = errors.New("tx fee must be greater than or equal to 0")
+
+	ErrInvalidGasAdjustment = errors.New("gas adjustment must be greater than or equal to 1")
 )
