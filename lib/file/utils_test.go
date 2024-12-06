@@ -27,7 +27,7 @@ func TestReadFileIntoType(t *testing.T) {
 	err = os.WriteFile(f.Name(), bz, 0o600)
 	require.NoError(t, err)
 
-	m, err := ReadJSONIntoFile[[]types.Market](f.Name())
+	m, err := ReadJSONFromFile[[]types.Market](f.Name())
 	require.NoError(t, err)
 
 	require.Equal(t, markets, m)
@@ -40,7 +40,7 @@ func TestWriteJSONToFile(t *testing.T) {
 	err := WriteJSONToFile(x, filePath)
 	require.NoError(t, err)
 
-	y, err := ReadJSONIntoFile[types.Market](filePath)
+	y, err := ReadJSONFromFile[types.Market](filePath)
 	require.NoError(t, err)
 	assert.Equal(t, x.ProviderConfigs, y.ProviderConfigs)
 }

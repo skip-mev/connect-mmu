@@ -5,6 +5,7 @@ import (
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/basic"
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/composite"
+
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/utils"
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/signing"

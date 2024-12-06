@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/skip-mev/connect-mmu/lib/file"
 	"github.com/skip-mev/connect-mmu/validator/types"
 )
 
@@ -189,27 +190,9 @@ func getFlags(flags *pflag.FlagSet) cmdFlags {
 
 // finalize calculates the missing reports and providers that did not meet the success threshold, then writes them to disk.
 func finalize(health types.MarketHealth, healthFile string) error {
-	err := writeDataToFile(healthFile, health)
+	err := file.CreateAndWriteJSONToFile(healthFile, health)
 	if err != nil {
 		return fmt.Errorf("failed to write report file: %w", err)
-	}
-	return nil
-}
-
-// writeDataToFile is a convenience function that marshals `data` to json, then writes it to the specified filename.
-func writeDataToFile(fileName string, data any) error {
-	file, err := os.Create(fileName)
-	if err != nil {
-		return fmt.Errorf("error creating file %s: %w", fileName, err)
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ") // marshals it in a human-readable way.
-
-	err = encoder.Encode(data)
-	if err != nil {
-		return fmt.Errorf("error encoding file %s: %w: %v", fileName, err, data)
 	}
 	return nil
 }

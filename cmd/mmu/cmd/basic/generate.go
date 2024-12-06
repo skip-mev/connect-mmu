@@ -15,6 +15,7 @@ import (
 	"github.com/skip-mev/connect-mmu/diffs"
 	"github.com/skip-mev/connect-mmu/generator"
 	"github.com/skip-mev/connect-mmu/generator/types"
+	"github.com/skip-mev/connect-mmu/lib/file"
 	"github.com/skip-mev/connect-mmu/store/provider"
 )
 
@@ -51,8 +52,8 @@ func GenerateCmd() *cobra.Command {
 
 			if flags.marketMapOutPath != "" {
 				logger.Info("writing markets", zap.String("file", flags.marketMapOutPath))
-				if err := mmtypes.WriteMarketMapToFile(mm, flags.marketMapOutPath); err != nil {
-					return fmt.Errorf("failed to write market map: %w", err)
+				if err := file.WriteMarketMapToFile(flags.marketMapOutPath, mm); err != nil {
+					return err
 				}
 			}
 

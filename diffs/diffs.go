@@ -3,11 +3,11 @@ package diffs
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 
 	"github.com/skip-mev/connect-mmu/generator/types"
+	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
 func WriteRemovalReasonsToFile(filePath string, removalReasons types.RemovalReasons) error {
@@ -16,7 +16,7 @@ func WriteRemovalReasonsToFile(filePath string, removalReasons types.RemovalReas
 		return fmt.Errorf("failed to marshal removal reasons: %w", err)
 	}
 
-	return os.WriteFile(filePath, bz, 0o600)
+	return file.WriteBytesToFile(filePath, bz)
 }
 
 // FilterMarketUpdates identifies all fields in the updatedMarket.Ticker and updatedMarket.ProviderConfigs
