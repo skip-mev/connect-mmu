@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"sync"
+
+	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
 type MemoryStore struct {
@@ -35,7 +36,7 @@ func NewMemoryStore() *MemoryStore {
 }
 
 func NewMemoryStoreFromFile(path string) (*MemoryStore, error) {
-	jsonBz, err := os.ReadFile(path)
+	jsonBz, err := file.ReadBytesFromFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -245,5 +246,5 @@ func (w *MemoryStore) WriteToPath(_ context.Context, path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, bz, 0o600)
+	return file.WriteBytesToFile(path, bz)
 }

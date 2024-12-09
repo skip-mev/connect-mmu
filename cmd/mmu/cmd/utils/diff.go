@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
@@ -21,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/skip-mev/connect-mmu/client/marketmap"
+	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
 var netsToRPC = map[string]string{
@@ -63,7 +63,7 @@ func DiffCmd() *cobra.Command {
 				return err
 			}
 
-			generatedMarketMap, err := marketmaptypes.ReadMarketMapFromFile(flags.marketMapPath)
+			generatedMarketMap, err := file.ReadMarketMapFromFile(flags.marketMapPath)
 			if err != nil {
 				return fmt.Errorf("unable to read file marketmap: %w", err)
 			}
@@ -143,7 +143,7 @@ func DiffCmd() *cobra.Command {
 			if flags.outputPath != "" {
 				bz := bytes.NewBuffer([]byte(theDiff))
 				bz.WriteString(newMarketsString)
-				err = os.WriteFile(flags.outputPath+".txt", bz.Bytes(), 0o600)
+				err := file.WriteBytesToFile(flags.outputPath+".txt", bz.Bytes())
 				if err != nil {
 					return fmt.Errorf("failed to write diff to file: %w", err)
 				}

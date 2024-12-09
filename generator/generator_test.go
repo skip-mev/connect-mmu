@@ -48,10 +48,10 @@ func TestGenerationDeterminisimFromIndexedFile(t *testing.T) {
 		require.NoError(t, err)
 
 		if !mm1.Equal(mm2) {
-			require.NoError(t, file.WriteJSONToFile(mm1, "mm1.json"))
-			require.NoError(t, file.WriteJSONToFile(removals1, "removals1.json"))
-			require.NoError(t, file.WriteJSONToFile(mm2, "mm2.json"))
-			require.NoError(t, file.WriteJSONToFile(removals2, "removals2.json"))
+			require.NoError(t, file.WriteJSONToFile("mm1.json", mm1))
+			require.NoError(t, file.WriteJSONToFile("removals1.json", removals1))
+			require.NoError(t, file.WriteJSONToFile("mm2.json", mm2))
+			require.NoError(t, file.WriteJSONToFile("removals2.json", removals2))
 		}
 
 		require.Equal(t, len(mm1.Markets), len(mm2.Markets))

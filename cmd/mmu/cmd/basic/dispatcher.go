@@ -43,7 +43,7 @@ func DispatchCmd(registry *signing.Registry) *cobra.Command {
 				return errors.New("chain configuration missing from mmu config")
 			}
 
-			upserts, err := file.ReadJSONIntoFile[[]mmtypes.Market](flags.upsertsPath)
+			upserts, err := file.ReadJSONFromFile[[]mmtypes.Market](flags.upsertsPath)
 			if err != nil {
 				return fmt.Errorf("failed to read upserts file: %w", err)
 			}
@@ -74,6 +74,11 @@ func DispatchCmd(registry *signing.Registry) *cobra.Command {
 			}
 
 			txs, err := dp.GenerateTransactions(cmd.Context(), msgs)
+			if err != nil {
+				return err
+			}
+
+			err = file.WriteJSONToFile("transactions.json", txs)
 			if err != nil {
 				return err
 			}

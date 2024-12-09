@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadFileIntoType(t *testing.T) {
+func TestReadJSONFromFile(t *testing.T) {
 	market := types.Market{
 		Ticker: types.Ticker{CurrencyPair: connecttypes.CurrencyPair{Base: "FOO", Quote: "BAR"}},
 	}
@@ -27,7 +27,7 @@ func TestReadFileIntoType(t *testing.T) {
 	err = os.WriteFile(f.Name(), bz, 0o600)
 	require.NoError(t, err)
 
-	m, err := ReadJSONIntoFile[[]types.Market](f.Name())
+	m, err := ReadJSONFromFile[[]types.Market](f.Name())
 	require.NoError(t, err)
 
 	require.Equal(t, markets, m)
@@ -37,10 +37,10 @@ func TestWriteJSONToFile(t *testing.T) {
 	dir := t.TempDir()
 	x := types.Market{ProviderConfigs: []types.ProviderConfig{{Name: "foo"}}}
 	filePath := filepath.Join(dir, "data.json")
-	err := WriteJSONToFile(x, filePath)
+	err := WriteJSONToFile(filePath, x)
 	require.NoError(t, err)
 
-	y, err := ReadJSONIntoFile[types.Market](filePath)
+	y, err := ReadJSONFromFile[types.Market](filePath)
 	require.NoError(t, err)
 	assert.Equal(t, x.ProviderConfigs, y.ProviderConfigs)
 }

@@ -157,7 +157,9 @@ func ValidateCmd() *cobra.Command {
 			}
 
 			cmd.Println("validation finished")
-			health, err := readHealthFile(flags.healthFile)
+
+			// read the health report file written by the validation's log ingestion binary.
+			health, err := file.ReadJSONFromFile[validatortypes.MarketHealth](flags.healthFile)
 			if err != nil {
 				return fmt.Errorf("failed to get health file: %w", err)
 			}
@@ -178,7 +180,7 @@ func ValidateCmd() *cobra.Command {
 				validator.CheckReferencePrice(float64(flags.referencePriceAllowance)),
 			)
 
-			if err := file.WriteJSONToFile(summary, flags.writeReportFile); err != nil {
+			if err := file.WriteJSONToFile(flags.writeReportFile, summary); err != nil {
 				cmd.Println("failed to write report file: ", err.Error())
 			}
 
@@ -300,7 +302,7 @@ func generateErrorFromReport(mm types.MarketMap, reports validatortypes.Reports,
 
 // getMarketMapFromFlags will get a marketmap based on the flags passed.
 func getMarketMapFromFlags(opts validateCmdFlags) (types.MarketMap, error) {
-	mm, err := types.ReadMarketMapFromFile(opts.marketmapPath)
+	mm, err := file.ReadMarketMapFromFile(opts.marketmapPath)
 	if err != nil {
 		return types.MarketMap{}, fmt.Errorf("error loading marketmap: %w", err)
 	}
@@ -317,22 +319,6 @@ func checkInstalled(bin string) error {
 		return fmt.Errorf("required binary %q is not installed: %w", bin, err)
 	}
 	return nil
-}
-
-// readHealthFile reads the health report file written by the validation's log ingestion binary.
-func readHealthFile(fileName string) (validatortypes.MarketHealth, error) {
-	bz, err := os.ReadFile(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %w", fileName, err)
-	}
-
-	// failed is a map of currency pairs to providers that failed.
-	health := make(validatortypes.MarketHealth)
-	err = json.Unmarshal(bz, &health)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal %s: %w", fileName, err)
-	}
-	return health, nil
 }
 
 func writeMarketMapToTempFile(mm types.MarketMap) (*os.File, error) {

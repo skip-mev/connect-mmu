@@ -28,7 +28,7 @@ func UpsertsCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			logger := logging.Logger(cmd.Context())
 
-			generatedMM, err := file.ReadJSONIntoFile[mmtypes.MarketMap](flags.marketMapPath)
+			generatedMM, err := file.ReadJSONFromFile[mmtypes.MarketMap](flags.marketMapPath)
 			if err != nil {
 				return fmt.Errorf("failed to read generated marketmap: %w", err)
 			}
@@ -60,7 +60,7 @@ func UpsertsCmd() *cobra.Command {
 				return fmt.Errorf("failed to read upsert config at %s: %w", flags.configPath, err)
 			}
 
-			err = file.WriteJSONToFile(upserts, flags.upsertsOutPath)
+			err = file.WriteJSONToFile(flags.upsertsOutPath, upserts)
 			if err != nil {
 				return fmt.Errorf("failed to write upserts: %w", err)
 			}

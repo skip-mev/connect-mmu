@@ -14,6 +14,7 @@ import (
 	marketmapclient "github.com/skip-mev/connect-mmu/client/marketmap"
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/config"
+	"github.com/skip-mev/connect-mmu/lib/file"
 	"github.com/skip-mev/connect-mmu/override"
 	"github.com/skip-mev/connect-mmu/override/update"
 )
@@ -42,7 +43,7 @@ func OverrideCmd() *cobra.Command {
 
 			logger.Info("successfully read chain config", zap.String("path", flags.configPath))
 
-			fileMarketMap, err := mmtypes.ReadMarketMapFromFile(flags.marketMapPath)
+			fileMarketMap, err := file.ReadMarketMapFromFile(flags.marketMapPath)
 			if err != nil {
 				logger.Error("failed to read marketmap", zap.Error(err))
 				return err
@@ -65,7 +66,7 @@ func OverrideCmd() *cobra.Command {
 
 			logger.Info("successfully overrode market map with on-chain markets", zap.Int("num markets", len(overriddenMarketMap.Markets)))
 
-			err = mmtypes.WriteMarketMapToFile(overriddenMarketMap, flags.marketMapOutPath)
+			err = file.WriteMarketMapToFile(flags.marketMapOutPath, overriddenMarketMap)
 			if err != nil {
 				logger.Error("failed to write marketmap", zap.Error(err))
 				return err

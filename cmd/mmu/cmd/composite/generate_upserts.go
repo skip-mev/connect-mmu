@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
-
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/basic"
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/config"
@@ -91,7 +89,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 
 	if flags.writeIntermediate {
 		logger.Info("writing markets", zap.String("file", flags.generatedMarketMapOutPath))
-		if err := mmtypes.WriteMarketMapToFile(generated, flags.generatedMarketMapOutPath); err != nil {
+		if err := file.WriteMarketMapToFile(flags.generatedMarketMapOutPath, generated); err != nil {
 			return fmt.Errorf("failed to write generated market map: %w", err)
 		}
 
@@ -123,7 +121,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 
 	if flags.writeIntermediate {
 		logger.Info("writing overridden market map", zap.String("file", flags.overrideMarketMapOutPath))
-		err = mmtypes.WriteMarketMapToFile(overriddenMarketMap, flags.overrideMarketMapOutPath)
+		err = file.WriteMarketMapToFile(flags.overrideMarketMapOutPath, overriddenMarketMap)
 		if err != nil {
 			logger.Error("failed to write overridden marketmap", zap.Error(err))
 			return err
@@ -147,7 +145,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 		return err
 	}
 
-	err = file.WriteJSONToFile(upserts, flags.upsertsOutPath)
+	err = file.WriteJSONToFile(flags.upsertsOutPath, upserts)
 	if err != nil {
 		return fmt.Errorf("failed to write upserts: %w", err)
 	}
