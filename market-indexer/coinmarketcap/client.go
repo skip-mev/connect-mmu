@@ -136,6 +136,7 @@ func (h *httpClient) ExchangeMarkets(ctx context.Context, exchange int) (Exchang
 	opts := []http.GetOptions{
 		http.WithHeader("X-CMC_PRO_API_KEY", h.apiKey),
 		http.WithJSONAccept(),
+		http.WithQueryParam("category", "spot"),
 	}
 
 	resp, err := h.client.GetWithContext(ctx, fmt.Sprintf(EndpointExchangeMarkets, exchange), opts...)
