@@ -208,7 +208,7 @@ func (w *MemoryStore) GetProviderMarkets(_ context.Context, params GetFilteredPr
 			MetadataJSON:     []byte(providerMarket.MetadataJSON),
 			ReferencePrice:   providerMarket.ReferencePrice,
 			NegativeDepthTwo: providerMarket.NegativeDepthTwo,
-			PositiveDepthTwo: providerMarket.NegativeDepthTwo,
+			PositiveDepthTwo: providerMarket.PositiveDepthTwo,
 			BaseCmcID:        baseAssetInfo.CMCID,
 			QuoteCmcID:       quoteAssetInfo.CMCID,
 			BaseRank:         baseAssetInfo.Rank,
