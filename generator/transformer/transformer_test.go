@@ -782,3 +782,222 @@ func TestDefaultTransformer_TransformMarketMap(t *testing.T) {
 		})
 	}
 }
+
+func TestPruneByProviderLiquidity(t *testing.T) {
+	tests := []struct {
+		name            string
+		feeds           types.Feeds
+		config          config.GenerateConfig
+		expectedFeeds   types.Feeds
+		expectedRemoved int
+	}{
+		{
+			name: "provider ignores liquidity filter",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					LiquidityInfo: mmutypes.LiquidityInfo{
+						NegativeDepthTwo: 100,
+						PositiveDepthTwo: 100,
+					},
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						IgnoreLiquidity:      true,
+						MinProviderLiquidity: 1000,
+					},
+				},
+			},
+			expectedFeeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					LiquidityInfo: mmutypes.LiquidityInfo{
+						NegativeDepthTwo: 100,
+						PositiveDepthTwo: 100,
+					},
+				},
+			},
+			expectedRemoved: 0,
+		},
+		{
+			name: "insufficient liquidity",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					LiquidityInfo: mmutypes.LiquidityInfo{
+						NegativeDepthTwo: 100,
+						PositiveDepthTwo: 100,
+					},
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						MinProviderLiquidity: 1000,
+					},
+				},
+			},
+			expectedFeeds:   types.Feeds{},
+			expectedRemoved: 1,
+		},
+		{
+			name: "sufficient liquidity",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					LiquidityInfo: mmutypes.LiquidityInfo{
+						NegativeDepthTwo: 2000,
+						PositiveDepthTwo: 2000,
+					},
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						MinProviderLiquidity: 1000,
+					},
+				},
+			},
+			expectedFeeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					LiquidityInfo: mmutypes.LiquidityInfo{
+						NegativeDepthTwo: 2000,
+						PositiveDepthTwo: 2000,
+					},
+				},
+			},
+			expectedRemoved: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
+			transform := transformer.PruneByProviderLiquidity()
+			feeds, removals, err := transform(context.Background(), logger, tc.config, tc.feeds)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedFeeds, feeds)
+			require.Equal(t, tc.expectedRemoved, len(removals))
+		})
+	}
+}
+
+func TestPruneByProviderVolume(t *testing.T) {
+	tests := []struct {
+		name            string
+		feeds           types.Feeds
+		config          config.GenerateConfig
+		expectedFeeds   types.Feeds
+		expectedRemoved int
+	}{
+		{
+			name: "provider ignores volume filter",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					DailyQuoteVolume: big.NewFloat(100),
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						IgnoreVolume:      true,
+						MinProviderVolume: 1000,
+					},
+				},
+			},
+			expectedFeeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					DailyQuoteVolume: big.NewFloat(100),
+				},
+			},
+			expectedRemoved: 0,
+		},
+		{
+			name: "insufficient volume",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					DailyQuoteVolume: big.NewFloat(100),
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						MinProviderVolume: 1000,
+					},
+				},
+			},
+			expectedFeeds:   types.Feeds{},
+			expectedRemoved: 1,
+		},
+		{
+			name: "sufficient volume",
+			feeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					DailyQuoteVolume: big.NewFloat(2000),
+				},
+			},
+			config: config.GenerateConfig{
+				Providers: map[string]config.ProviderConfig{
+					krakenProvider: {
+						MinProviderVolume: 1000,
+					},
+				},
+			},
+			expectedFeeds: types.Feeds{
+				{
+					Ticker: btcusd,
+					ProviderConfig: mmtypes.ProviderConfig{
+						Name: krakenProvider,
+					},
+					DailyQuoteVolume: big.NewFloat(2000),
+				},
+			},
+			expectedRemoved: 0,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			logger := zaptest.NewLogger(t)
+			transform := transformer.PruneByProviderVolume()
+			feeds, removals, err := transform(context.Background(), logger, tc.config, tc.feeds)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedFeeds, feeds)
+			require.Equal(t, tc.expectedRemoved, len(removals))
+		})
+	}
+}

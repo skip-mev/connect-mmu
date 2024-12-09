@@ -29,6 +29,8 @@ func New(logger *zap.Logger) Transformer {
 			InvertOrDrop(), // must invert before normalize
 			PruneByLiquidity(),
 			PruneByQuoteVolume(),
+			PruneByProviderLiquidity(),
+			PruneByProviderVolume(),
 			ResolveNamingAliases(),
 			NormalizeBy(),
 			DropFeedsWithoutAggregatorIDs(),

@@ -41,6 +41,14 @@ type ProviderConfig struct {
 
 	// IsDefi is a flag that denotes that this provider is to be considered as a Defi venue.
 	IsDefi bool `json:"is_defi" mapstructure:"is_defi"`
+
+	// MinProviderVolume is the minimum volume threshold specific to this provider.
+	// If set to 0, this threshold is ignored.
+	MinProviderVolume float64 `json:"min_provider_volume" mapstructure:"min_provider_volume"`
+
+	// MinProviderLiquidity is the minimum liquidity threshold specific to this provider.
+	// If set to 0, this threshold is ignored.
+	MinProviderLiquidity float64 `json:"min_provider_liquidity" mapstructure:"min_provider_liquidity"`
 }
 
 // Filters is a set of filters to apply to a market on a per-provider basis.
@@ -53,6 +61,14 @@ type Filters struct {
 
 // Validate checks if the ProviderConfig is valid.
 func (pc *ProviderConfig) Validate() error {
+	if pc.MinProviderVolume < 0 {
+		return fmt.Errorf("min_provider_volume must be non-negative")
+	}
+
+	if pc.MinProviderLiquidity < 0 {
+		return fmt.Errorf("min_provider_liquidity must be non-negative")
+	}
+
 	return nil
 }
 

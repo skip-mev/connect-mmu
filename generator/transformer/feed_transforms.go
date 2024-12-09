@@ -265,7 +265,7 @@ func PruneByQuoteVolume() TransformFeed {
 	return func(_ context.Context, logger *zap.Logger, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds,
 		types.RemovalReasons, error,
 	) {
-		logger.Info("pruning feeds by quote", zap.Int("feeds", len(feeds)))
+		logger.Info("pruning feeds by quote volume", zap.Int("feeds", len(feeds)))
 
 		out := make([]types.Feed, 0, len(feeds))
 		removals := types.NewRemovalReasons()
@@ -295,7 +295,7 @@ func PruneByQuoteVolume() TransformFeed {
 			logger.Debug("dropping feed", zap.Any("feed", feed))
 		}
 
-		logger.Info("pruned", zap.Int("feeds remaining", len(out)))
+		logger.Info("pruned feeds by quote volume", zap.Int("feeds remaining", len(out)))
 		return out, removals, nil
 	}
 }
@@ -451,6 +451,91 @@ func TopFeedsForProvider() TransformFeed {
 		}
 
 		return provFeeds.ToFeeds(), removals, nil
+	}
+}
+
+// PruneByProviderLiquidity removes feeds that don't meet provider-specific liquidity thresholds.
+// Each provider can specify a min_provider_liquidity threshold in the config.
+func PruneByProviderLiquidity() TransformFeed {
+	return func(_ context.Context, logger *zap.Logger, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds, types.RemovalReasons, error) {
+		logger.Info("pruning by provider liquidity", zap.Int("feeds", len(feeds)))
+
+		out := make([]types.Feed, 0, len(feeds))
+		removals := types.NewRemovalReasons()
+
+		for _, feed := range feeds {
+			providerName := feed.ProviderConfig.Name
+			providerConfig, found := cfg.Providers[providerName]
+
+			// Skip if provider ignores liquidity
+			if found && providerConfig.IgnoreLiquidity {
+				out = append(out, feed)
+				continue
+			}
+
+			if found && feed.LiquidityInfo.IsSufficient(providerConfig.MinProviderLiquidity) {
+				out = append(out, feed)
+				continue
+			}
+
+			var reason string
+			if !found {
+				reason = "PruneByProviderLiquidity: Not Found"
+			} else if !feed.LiquidityInfo.IsSufficient(providerConfig.MinProviderLiquidity) {
+				reason = fmt.Sprintf("PruneByProviderLiquidity: NegativeDepthTwo: %f, PositiveDepthTwo: %f, "+
+					"MinProviderLiquidity: %f",
+					feed.LiquidityInfo.NegativeDepthTwo,
+					feed.LiquidityInfo.PositiveDepthTwo,
+					providerConfig.MinProviderLiquidity,
+				)
+			}
+			removals.AddRemovalReasonFromFeed(feed, providerName, reason)
+			logger.Debug("dropping feed", zap.Any("feed", feed))
+		}
+
+		logger.Info("pruned feeds by provider liquidity", zap.Int("feeds remaining", len(out)))
+		return out, removals, nil
+	}
+}
+
+// PruneByProviderVolume removes feeds that don't meet provider-specific volume thresholds.
+// Each provider can specify a min_provider_volume threshold in the config.
+func PruneByProviderVolume() TransformFeed {
+	return func(_ context.Context, logger *zap.Logger, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds, types.RemovalReasons, error) {
+		logger.Info("pruning by provider volume", zap.Int("feeds", len(feeds)))
+
+		out := make([]types.Feed, 0, len(feeds))
+		removals := types.NewRemovalReasons()
+
+		for _, feed := range feeds {
+			providerName := feed.ProviderConfig.Name
+			providerCfg, found := cfg.Providers[providerName]
+			if found && providerCfg.IgnoreVolume {
+				out = append(out, feed)
+				continue
+			}
+
+			dailyQuoteVolumeFloat, _ := feed.DailyQuoteVolume.Float64()
+			if found && dailyQuoteVolumeFloat >= providerCfg.MinProviderVolume {
+				out = append(out, feed)
+				continue
+			}
+
+			var reason string
+			if !found {
+				reason = "PruneByProviderVolume: Not Found"
+			} else if dailyQuoteVolumeFloat < providerCfg.MinProviderVolume {
+				reason = fmt.Sprintf("PruneByProviderVolume: Volume24H: %f, MinProviderVolume: %f",
+					dailyQuoteVolumeFloat,
+					providerCfg.MinProviderVolume,
+				)
+			}
+			removals.AddRemovalReasonFromFeed(feed, providerName, reason)
+			logger.Debug("dropping feed", zap.Any("feed", feed))
+		}
+
+		logger.Info("pruned feeds by provider volume", zap.Int("feeds remaining", len(out)))
+		return out, removals, nil
 	}
 }
 

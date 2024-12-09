@@ -343,6 +343,66 @@ func TestValidateGenerateConfig(t *testing.T) {
 	}
 }
 
+func TestProviderConfig_Validate(t *testing.T) {
+	tcs := []struct {
+		name        string
+		cfg         config.ProviderConfig
+		expectedErr bool
+	}{
+		{
+			name: "valid config - zero values",
+			cfg: config.ProviderConfig{
+				MinProviderVolume:    0,
+				MinProviderLiquidity: 0,
+			},
+			expectedErr: false,
+		},
+		{
+			name: "valid config - positive values",
+			cfg: config.ProviderConfig{
+				MinProviderVolume:    100,
+				MinProviderLiquidity: 1000,
+			},
+			expectedErr: false,
+		},
+		{
+			name: "invalid config - negative volume",
+			cfg: config.ProviderConfig{
+				MinProviderVolume:    -1,
+				MinProviderLiquidity: 0,
+			},
+			expectedErr: true,
+		},
+		{
+			name: "invalid config - negative liquidity",
+			cfg: config.ProviderConfig{
+				MinProviderVolume:    0,
+				MinProviderLiquidity: -1,
+			},
+			expectedErr: true,
+		},
+		{
+			name: "invalid config - both negative",
+			cfg: config.ProviderConfig{
+				MinProviderVolume:    -100,
+				MinProviderLiquidity: -1000,
+			},
+			expectedErr: true,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.cfg.Validate()
+			if tc.expectedErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestGenerateConfig_IsCurrencyPairAllowed(t *testing.T) {
 	tcs := []struct {
 		name     string
