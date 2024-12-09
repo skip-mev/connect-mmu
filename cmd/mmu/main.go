@@ -65,9 +65,9 @@ func getArgsFromLambdaEvent(ctx context.Context, event json.RawMessage, cmcApiKe
 		args = append(args, "--market-map", "generated-market-map.json", "--cmc-api-key", cmcApiKey, "--enable-all")
 	case "upserts":
 		args = append(args, "--warn-on-invalid-market-map")
-	default:
-		return nil, fmt.Errorf("received invalid command from Lambda event: %s", command)
 	}
+
+	logger.Info("received Lambda command", zap.Strings("args", args))
 
 	return args, nil
 }
