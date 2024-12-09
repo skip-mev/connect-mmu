@@ -390,7 +390,7 @@
     "rest_address": "https://validator.v4staging.dydx.exchange:1317",
     "dydx": true,
     "chain_id": "dydxprotocol-testnet",
-    "version": "slinky",
+    "version": "connect",
     "prefix": "dydx"
   }
 }
