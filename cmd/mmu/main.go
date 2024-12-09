@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd"
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
@@ -19,7 +20,8 @@ import (
 )
 
 type LambdaEvent struct {
-	Command string `json:"command"`
+	Command   string `json:"command"`
+	Timestamp string `json:"timestamp,omitempty"`
 }
 
 func createSigningRegistry() *signing.Registry {
@@ -43,22 +45,29 @@ func getArgsFromLambdaEvent(ctx context.Context, event json.RawMessage, cmcApiKe
 		return nil, err
 	}
 
-	args := []string{"command"}
+	if lambdaEvent.Command != "index" && lambdaEvent.Timestamp == "" {
+		return nil, fmt.Errorf("lambda commands require a timestamp of the input file(s) to use")
+	}
+
+	// Set TIMESTAMP env var for file I/O prefixes in S3
+	var timestamp string
+	if lambdaEvent.Command == "index" {
+		timestamp = time.Now().UTC().Format(time.RFC3339)
+	} else {
+		timestamp = lambdaEvent.Timestamp
+	}
+	os.Setenv("TIMESTAMP", timestamp)
+
+	args := []string{lambdaEvent.Command}
 
 	switch command := lambdaEvent.Command; command {
-	case "index":
-		args[0] = "index"
-	case "generate":
-		args[0] = "generate"
 	case "validate":
-		args = []string{"validate", "--market-map", "generated-market-map.json", "--cmc-api-key", cmcApiKey, "--enable-all"}
-	case "override":
-		args[0] = "override"
+		args = append(args, "--market-map", "generated-market-map.json", "--cmc-api-key", cmcApiKey, "--enable-all")
 	case "upserts":
-		args = []string{"upserts", "--warn-on-invalid-market-map"}
-	default:
-		return nil, fmt.Errorf("received invalid command from Lambda event: %s", command)
+		args = append(args, "--warn-on-invalid-market-map")
 	}
+
+	logger.Info("received Lambda command", zap.Strings("args", args))
 
 	return args, nil
 }

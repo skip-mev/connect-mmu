@@ -41,7 +41,7 @@ func GetSecret(ctx context.Context, name string) (secretString string, err error
 }
 
 func ReadFromS3(path string) ([]byte, error) {
-	bucket, key, err := getS3PathFromLocalPath(path)
+	bucket, key, err := getS3Path(path)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func ReadFromS3(path string) ([]byte, error) {
 }
 
 func WriteToS3(path string, bz []byte) error {
-	bucket, key, err := getS3PathFromLocalPath(path)
+	bucket, key, err := getS3Path(path)
 	if err != nil {
 		return err
 	}
@@ -85,15 +85,17 @@ func WriteToS3(path string, bz []byte) error {
 	return nil
 }
 
-func getS3PathFromLocalPath(path string) (bucket string, key string, err error) {
+func getS3Path(path string) (bucket string, key string, err error) {
 	env := os.Getenv("ENVIRONMENT")
 	if env != "staging" && env != "mainnet" {
 		return bucket, key, fmt.Errorf("failed to fetch valid 'ENVIRONMENT' from env vars: ENVIRONMENT='%s'", env)
 	}
 	bucket = env + "-market-map-updater"
 
+	timestamp := os.Getenv("TIMESTAMP")
 	pathTokens := strings.Split(path, "/")
-	key = pathTokens[len(pathTokens)-1]
+	filename := pathTokens[len(pathTokens)-1]
+	key = timestamp + "-" + filename
 
 	return bucket, key, nil
 }
