@@ -36,6 +36,14 @@ func WithJSONAccept() GetOptions {
 	}
 }
 
+func WithQueryParam(key, value string) GetOptions {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Add(key, value)
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 // GetWithContext performs a Get request with the context provided.
 func (c *Client) GetWithContext(ctx context.Context, url string, opts ...GetOptions) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
