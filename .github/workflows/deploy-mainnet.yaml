@@ -1,0 +1,19 @@
+name: Deploy Mainnet
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy_mainnet:
+    name: Deploy Mainnet
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: "mainnet"
+      ecr_url: ""
+    secrets:
+      aws_access_key_id: ${{ secrets['MAINNET_MARKET_MAP_UPDATER_AWS_ACCESS_KEY_ID'] }}
+      aws_secret_access_key: ${{ secrets['MAINNET_MARKET_MAP_UPDATER_AWS_SECRET_ACCESS_KEY'] }}
