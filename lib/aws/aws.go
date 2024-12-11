@@ -14,9 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-var cfg aws.Config
-var s3Client *s3.Client
-var secretsManagerClient *secretsmanager.Client
+var (
+	s3Client             *s3.Client
+	secretsManagerClient *secretsmanager.Client
+)
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion("ap-northeast-1"))
