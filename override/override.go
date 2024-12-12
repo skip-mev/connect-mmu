@@ -158,11 +158,15 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 //
 // result: FOO,UNISWAP,0XFOOBAR/USD ---becomes---> FOO/USD.
 func ConsolidateDeFiMarkets(logger *zap.Logger, generated, actual mmtypes.MarketMap) (mmtypes.MarketMap, error) {
-	generatedCMCIDMapping, err := getCMCTickerMapping(generated)
+	generatedCMCIDMapping, err := getCMCTickerMapping(logger, generated, true)
 	if err != nil {
 		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for generated market map: %w", err)
 	}
-	actualCMCIDMapping, err := getCMCTickerMapping(actual)
+	// we don't want any DeFi markets in our mapping because we don't want to append any providers to an on-chain defi market.
+	// this is because DeFi markets are provider-bound, and should not include any other providers.
+	//
+	// i.e. for a ticker FOO,UNISWAPV3,0XFOOBAR, it would not make sense to append raydium, coinbase... etc.
+	actualCMCIDMapping, err := getCMCTickerMapping(logger, actual, false)
 	if err != nil {
 		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for actual market map: %w", err)
 	}
@@ -191,19 +195,31 @@ func isDefiTicker(ticker string) bool {
 	return !connecttypes.IsLegacyAssetString(ticker)
 }
 
-// getCMCTickerMapping extracts a mapping of cmc ID's to ticker from the marketmap.
-func getCMCTickerMapping(mm mmtypes.MarketMap) (map[string]string, error) {
+// getCMCTickerMapping extracts a mapping of cmc ID's to ticker from the marketmap. can optionally ignore defi markets
+// by passing false to includeDeFi. We allow this because for the on-chain/actual marketmap,
+// we don't want to consolidate markets under a DeFi ticker. DeFi tickers should remain untouched as they are specific
+// to their provider, and shouldn't gain more providers.
+func getCMCTickerMapping(logger *zap.Logger, mm mmtypes.MarketMap, includeDeFi bool) (map[string]string, error) {
 	cmcIDToTickers := make(map[string]string)
 	for ticker, market := range mm.Markets {
 		if market.Ticker.Metadata_JSON != "" {
+			// if we're NOT including DeFi, and the ticker IS DeFi, we ignore.
+			if !includeDeFi && isDefiTicker(ticker) {
+				continue
+			}
 			var md tickermetadata.CoreMetadata
 			if err := json.Unmarshal([]byte(market.Ticker.Metadata_JSON), &md); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal market metadata for %q: %w", ticker, err)
 			}
 			for _, aggID := range md.AggregateIDs {
 				if aggID.Venue == types.VenueCoinMarketcap {
-					if _, ok := cmcIDToTickers[aggID.ID]; ok {
-						return nil, fmt.Errorf("duplicate cmc ID %q found for ticker %q", aggID.ID, ticker)
+					// if we found duplicates, we just log that we did and continue. there are a few markets on dYdX
+					// that have this issue, and we should be resolving this by hand as it requires human intervention to decide
+					// if the markets should be consolidated, and which one we should consolidate to.
+					if otherTicker, ok := cmcIDToTickers[aggID.ID]; ok {
+						logger.Debug("duplicate CMC ID found. will not attempt to consolidate this market", zap.String("market", ticker), zap.String("other_market", otherTicker))
+						delete(cmcIDToTickers, aggID.ID)
+						continue
 					}
 					cmcIDToTickers[aggID.ID] = ticker
 					break
