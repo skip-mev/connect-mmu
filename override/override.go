@@ -2,9 +2,13 @@ package override
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	"github.com/skip-mev/connect-mmu/generator/types"
+	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
+	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
 	"go.uber.org/zap"
 
 	"github.com/skip-mev/connect-mmu/client/dydx"
@@ -143,4 +147,69 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 	}
 
 	return combinedMarketMap, nil
+}
+
+// ConsolidateDeFiMarkets takes a generated marketmap and attempts to move any DeFi markets to normal markets if the generated market
+// has the same CMC ID as a normal market in actual.
+//
+// example:
+// generated market: FOO,UNISWAP,0XFOOBAR/USD - CMC ID 4
+// actual market:    FOO/USD - CMC ID 4
+//
+// result: FOO,UNISWAP,0XFOOBAR/USD ---becomes---> FOO/USD.
+func ConsolidateDeFiMarkets(logger *zap.Logger, generated, actual mmtypes.MarketMap) (mmtypes.MarketMap, error) {
+	generatedCMCIDMapping, err := getCMCTickerMapping(generated)
+	if err != nil {
+		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for generated market map: %w", err)
+	}
+	actualCMCIDMapping, err := getCMCTickerMapping(actual)
+	if err != nil {
+		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for actual market map: %w", err)
+	}
+
+	for cmcID, generatedTicker := range generatedCMCIDMapping {
+		if actualTicker, ok := actualCMCIDMapping[cmcID]; ok {
+			if generatedTicker != actualTicker {
+				if isDefiTicker(generatedTicker) && !isDefiTicker(actualTicker) {
+					logger.Debug("consolidating ticker", zap.String("generated", generatedTicker), zap.String("actual", actualTicker))
+					generatedMarket := generated.Markets[generatedTicker]
+					pair, err := connecttypes.CurrencyPairFromString(actualTicker)
+					if err != nil {
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to convert ticker %s to currency pair: %w", actualTicker, err)
+					}
+					generatedMarket.Ticker.CurrencyPair = pair
+					generated.Markets[actualTicker] = generatedMarket
+					delete(generated.Markets, generatedTicker)
+				}
+			}
+		}
+	}
+	return generated, nil
+}
+
+func isDefiTicker(ticker string) bool {
+	return !connecttypes.IsLegacyAssetString(ticker)
+}
+
+// getCMCTickerMapping extracts a mapping of cmc ID's to ticker from the marketmap.
+func getCMCTickerMapping(mm mmtypes.MarketMap) (map[string]string, error) {
+	cmcIDToTickers := make(map[string]string)
+	for ticker, market := range mm.Markets {
+		if market.Ticker.Metadata_JSON != "" {
+			var md tickermetadata.CoreMetadata
+			if err := json.Unmarshal([]byte(market.Ticker.Metadata_JSON), &md); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal market metadata for %q: %w", ticker, err)
+			}
+			for _, aggID := range md.AggregateIDs {
+				if aggID.Venue == types.VenueCoinMarketcap {
+					if _, ok := cmcIDToTickers[aggID.ID]; ok {
+						return nil, fmt.Errorf("duplicate cmc ID %q found for ticker %q", aggID.ID, ticker)
+					}
+					cmcIDToTickers[aggID.ID] = ticker
+					break
+				}
+			}
+		}
+	}
+	return cmcIDToTickers, nil
 }
