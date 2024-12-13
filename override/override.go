@@ -17,6 +17,7 @@ import (
 	"github.com/skip-mev/connect-mmu/override/update"
 )
 
+// Override overrides a marketmap given the MarketMapOverride impl.
 func Override(ctx context.Context, logger *zap.Logger, mmo MarketMapOverride, actual, generated mmtypes.MarketMap, options update.Options) (mmtypes.MarketMap, error) {
 	if !options.DisableDeFiMarketMerging {
 		var err error
