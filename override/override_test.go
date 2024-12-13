@@ -95,7 +95,6 @@ func TestGetCMCIDMapping(t *testing.T) {
 				require.True(t, ok, "unexpected output id %s, ticker %s", id, ticker)
 				require.Equal(t, expected, ticker)
 			}
-
 		})
 	}
 }
