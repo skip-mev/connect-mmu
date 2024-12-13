@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/skip-mev/connect-mmu/generator/types"
 	connecttypes "github.com/skip-mev/connect/v2/pkg/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/skip-mev/connect/v2/x/marketmap/types/tickermetadata"
 	"go.uber.org/zap"
+
+	"github.com/skip-mev/connect-mmu/generator/types"
 
 	"github.com/skip-mev/connect-mmu/client/dydx"
 	libdydx "github.com/skip-mev/connect-mmu/lib/dydx"
