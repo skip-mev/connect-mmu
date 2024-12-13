@@ -1,0 +1,54 @@
+name: Deploy
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+      ecr_url:
+        required: true
+        type: string
+      ecr_repo_name:
+        required: true
+        type: string
+    secrets:
+      aws_access_key_id:
+        required: true
+      aws_secret_access_key:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy_ecr:
+    name: Deploy ${{ inputs.env }} image to ECR
+    runs-on: ubuntu-latest
+
+    # Cancel any concurrent deploys that are already in progress
+    concurrency:
+      group: ci-deploy-${{ inputs.env }}-market-map-updater
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.aws_access_key_id }}
+        aws-secret-access-key: ${{ secrets.aws_secret_access_key }}
+        aws-region: ap-northeast-1
+
+    - name: Docker login to ECR
+      run: aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin ${{ inputs.ecr_url }}
+
+    - name: Docker build and tag 
+      run: |
+        docker build -f contrib/images/mmu-lambda.Dockerfile -t ${{ inputs.ecr_repo_name }} .
+        docker tag ${{ inputs.ecr_repo_name }}:latest ${{ inputs.ecr_url }}/${{ inputs.ecr_repo_name }}:latest
+
+    - name: Docker push
+      run: docker push ${{ inputs.ecr_url }}/${{ inputs.ecr_repo_name }}:latest

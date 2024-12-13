@@ -24,6 +24,10 @@ type LambdaEvent struct {
 	Timestamp string `json:"timestamp,omitempty"`
 }
 
+type LambdaResponse struct {
+	Timestamp string `json:"timestamp"`
+}
+
 func createSigningRegistry() *signing.Registry {
 	r := signing.NewRegistry()
 	err := errors.Join(
@@ -72,7 +76,7 @@ func getArgsFromLambdaEvent(ctx context.Context, event json.RawMessage, cmcApiKe
 	return args, nil
 }
 
-func lambdaHandler(ctx context.Context, event json.RawMessage) error {
+func lambdaHandler(ctx context.Context, event json.RawMessage) (resp LambdaResponse, err error) {
 	logger := logging.Logger(ctx)
 
 	// Fetch CMC API Key from Secrets Manager and set it as env var
@@ -83,7 +87,7 @@ func lambdaHandler(ctx context.Context, event json.RawMessage) error {
 	args, err := getArgsFromLambdaEvent(ctx, event, cmcApiKey)
 	if err != nil {
 		logger.Error("failed to get args from Lambda event", zap.Error(err))
-		return err
+		return resp, err
 	}
 
 	r := createSigningRegistry()
@@ -91,10 +95,12 @@ func lambdaHandler(ctx context.Context, event json.RawMessage) error {
 	rootCmd.SetArgs(args)
 	if err := rootCmd.Execute(); err != nil {
 		logger.Error("failed to execute command", zap.Strings("command", args), zap.Error(err))
-		return err
+		return resp, err
 	}
 
-	return nil
+	return LambdaResponse{
+		Timestamp: os.Getenv("TIMESTAMP"),
+	}, nil
 }
 
 func main() {

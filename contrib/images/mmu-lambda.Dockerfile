@@ -4,7 +4,7 @@ WORKDIR /src/connect-mmu
 RUN apt-get update && apt-get install -y curl && apt-get install jq -y
 COPY . .
 
-RUN go build -o build/ ./...
+RUN env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o build/ ./...
 RUN make install-sentry
 
 # install slinky v1.0.12
@@ -22,6 +22,8 @@ COPY --from=builder /go/bin/sentry /usr/local/bin/
 # Copy all connect binaries
 COPY --from=builder /usr/local/bin/connect-* /usr/local/bin/
 COPY --from=builder /usr/local/bin/connect /usr/local/bin/
+# Copy config files
+COPY --from=builder /src/connect-mmu/local/* /usr/local/bin/local/
 # symlink slinky -> connect-1.0.12
 RUN ln -s /usr/local/bin/slinky /usr/local/bin/connect-1.0.12
 
