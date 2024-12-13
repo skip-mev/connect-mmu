@@ -58,6 +58,7 @@ func OverrideCmd() *cobra.Command {
 				flags.updateEnabled,
 				flags.overwriteProviders,
 				flags.existingOnly,
+				flags.consolidateDeFi,
 			)
 			if err != nil {
 				return err
@@ -89,6 +90,7 @@ type overrideCmdFlags struct {
 	updateEnabled      bool
 	overwriteProviders bool
 	existingOnly       bool
+	consolidateDeFi    bool
 }
 
 func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
@@ -97,6 +99,7 @@ func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
 	cmd.Flags().BoolVar(&flags.updateEnabled, UpdateEnabledFlag, UpdateEnabledDefault, UpdateEnabledDescription)
 	cmd.Flags().BoolVar(&flags.overwriteProviders, OverwriteProvidersFlag, OverwriteProvidersDefault, OverwriteProvidersDescription)
 	cmd.Flags().BoolVar(&flags.existingOnly, ExistingOnlyFlag, ExistingOnlyDefault, ExistingOnlyDescription)
+	cmd.Flags().BoolVar(&flags.consolidateDeFi, ConsolidateDeFiFlag, ConsolidateDeFiDefault, ConsolidateDeFiDescription)
 
 	cmd.Flags().StringVar(&flags.marketMapOutPath, MarketMapOutPathOverrideFlag, MarketMapOutPathOverrideDefault, MarketMapOutPathOverrideDescription)
 }
@@ -106,7 +109,7 @@ func OverrideMarketsFromConfig(
 	logger *zap.Logger,
 	cfg config.ChainConfig,
 	generated mmtypes.MarketMap,
-	updateEnabled, overwriteProviders, existingOnly bool,
+	updateEnabled, overwriteProviders, existingOnly, consolidateDeFi bool,
 ) (mmtypes.MarketMap, error) {
 	// create client based on config
 	mmClient, err := marketmapclient.NewClientFromChainConfig(logger, cfg)
@@ -133,9 +136,11 @@ func OverrideMarketsFromConfig(
 		}
 	}
 
-	generated, err = override.ConsolidateDeFiMarkets(logger, generated, onChainMarketMap)
-	if err != nil {
-		return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate generated marketmap: %w", err)
+	if consolidateDeFi {
+		generated, err = override.ConsolidateDeFiMarkets(logger, generated, onChainMarketMap)
+		if err != nil {
+			return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate generated marketmap: %w", err)
+		}
 	}
 
 	overriddenMarketMap, err := marketOverride.OverrideGeneratedMarkets(

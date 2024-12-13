@@ -29,6 +29,10 @@ const (
 	ExistingOnlyDefault     = false
 	ExistingOnlyDescription = "should update only markets that exist in the current market map"
 
+	ConsolidateDeFiFlag        = "consolidate-defi"
+	ConsolidateDeFiDefault     = false
+	ConsolidateDeFiDescription = "should attempt to merge DeFi markets into markets that have the same CMC ID"
+
 	// upserts
 	MarketMapOverrideFlag        = "market-map"
 	MarketMapOverrideDefault     = "./tmp/override-market-map.json"
