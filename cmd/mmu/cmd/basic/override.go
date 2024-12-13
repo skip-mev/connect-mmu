@@ -58,7 +58,7 @@ func OverrideCmd() *cobra.Command {
 				flags.updateEnabled,
 				flags.overwriteProviders,
 				flags.existingOnly,
-				flags.consolidateDeFi,
+				flags.disableDeFiMarketMerging,
 			)
 			if err != nil {
 				return err
@@ -84,13 +84,13 @@ func OverrideCmd() *cobra.Command {
 }
 
 type overrideCmdFlags struct {
-	configPath         string
-	marketMapPath      string
-	marketMapOutPath   string
-	updateEnabled      bool
-	overwriteProviders bool
-	existingOnly       bool
-	consolidateDeFi    bool
+	configPath               string
+	marketMapPath            string
+	marketMapOutPath         string
+	updateEnabled            bool
+	overwriteProviders       bool
+	existingOnly             bool
+	disableDeFiMarketMerging bool
 }
 
 func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
@@ -99,7 +99,7 @@ func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
 	cmd.Flags().BoolVar(&flags.updateEnabled, UpdateEnabledFlag, UpdateEnabledDefault, UpdateEnabledDescription)
 	cmd.Flags().BoolVar(&flags.overwriteProviders, OverwriteProvidersFlag, OverwriteProvidersDefault, OverwriteProvidersDescription)
 	cmd.Flags().BoolVar(&flags.existingOnly, ExistingOnlyFlag, ExistingOnlyDefault, ExistingOnlyDescription)
-	cmd.Flags().BoolVar(&flags.consolidateDeFi, ConsolidateDeFiFlag, ConsolidateDeFiDefault, ConsolidateDeFiDescription)
+	cmd.Flags().BoolVar(&flags.disableDeFiMarketMerging, DisableDeFiMarketMerging, DisableDeFiMarketMergingDefault, DisableDeFiMarketMergingDescription)
 
 	cmd.Flags().StringVar(&flags.marketMapOutPath, MarketMapOutPathOverrideFlag, MarketMapOutPathOverrideDefault, MarketMapOutPathOverrideDescription)
 }
@@ -109,7 +109,7 @@ func OverrideMarketsFromConfig(
 	logger *zap.Logger,
 	cfg config.ChainConfig,
 	generated mmtypes.MarketMap,
-	updateEnabled, overwriteProviders, existingOnly, consolidateDeFi bool,
+	updateEnabled, overwriteProviders, existingOnly, disableDeFiMarketMerging bool,
 ) (mmtypes.MarketMap, error) {
 	// create client based on config
 	mmClient, err := marketmapclient.NewClientFromChainConfig(logger, cfg)
@@ -136,7 +136,7 @@ func OverrideMarketsFromConfig(
 		}
 	}
 
-	if consolidateDeFi {
+	if !disableDeFiMarketMerging {
 		generated, err = override.ConsolidateDeFiMarkets(logger, generated, onChainMarketMap)
 		if err != nil {
 			return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate generated marketmap: %w", err)
