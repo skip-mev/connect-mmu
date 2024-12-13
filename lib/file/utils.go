@@ -14,20 +14,18 @@ func ReadBytesFromFile(path string) ([]byte, error) {
 	if aws.IsLambda() {
 		// Read from S3
 		return aws.ReadFromS3(path)
-	} else {
-		// Read from local file
-		return os.ReadFile(path)
 	}
+	// Read from local file
+	return os.ReadFile(path)
 }
 
 func WriteBytesToFile(path string, bz []byte) error {
 	if aws.IsLambda() {
 		// Write output to S3
 		return aws.WriteToS3(path, bz)
-	} else {
-		// Write output to local file
-		return os.WriteFile(path, bz, 0o600)
 	}
+	// Write output to local file
+	return os.WriteFile(path, bz, 0o600)
 }
 
 func ReadJSONFromFile[T any](path string) (t T, err error) {
@@ -72,21 +70,19 @@ func ReadMarketMapFromFile(path string) (marketMap mmtypes.MarketMap, err error)
 		}
 		return marketMap, nil
 
-	} else {
-		// Read from local file
-		return mmtypes.ReadMarketMapFromFile(path)
 	}
+	// Read from local file
+	return mmtypes.ReadMarketMapFromFile(path)
 }
 
 func WriteMarketMapToFile(path string, marketMap mmtypes.MarketMap) error {
 	if aws.IsLambda() {
 		// Write output to S3
 		return WriteJSONToFile(path, marketMap)
-	} else {
-		// Write output to local file
-		if err := mmtypes.WriteMarketMapToFile(marketMap, path); err != nil {
-			return fmt.Errorf("failed to write market map: %w", err)
-		}
-		return nil
 	}
+	// Write output to local file
+	if err := mmtypes.WriteMarketMapToFile(marketMap, path); err != nil {
+		return fmt.Errorf("failed to write market map: %w", err)
+	}
+	return nil
 }

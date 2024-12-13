@@ -16,11 +16,9 @@ jobs:
         with:
           go-version: 1.23.0
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          only-new-issues: true
-          args: --timeout 8m0s --verbose
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.62.2
+          golangci-lint run --timeout 8m0s --verbose
 
   codegen-lint:
     name: codegen-lint
