@@ -136,22 +136,17 @@ func OverrideMarketsFromConfig(
 		}
 	}
 
-	if !disableDeFiMarketMerging {
-		generated, err = override.ConsolidateDeFiMarkets(logger, generated, onChainMarketMap)
-		if err != nil {
-			return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate generated marketmap: %w", err)
-		}
-	}
-
-	overriddenMarketMap, err := marketOverride.OverrideGeneratedMarkets(
+	overriddenMarketMap, err := override.Override(
 		ctx,
 		logger,
+		marketOverride,
 		onChainMarketMap,
 		generated,
 		update.Options{
-			UpdateEnabled:      updateEnabled,
-			OverwriteProviders: overwriteProviders,
-			ExistingOnly:       existingOnly,
+			UpdateEnabled:            updateEnabled,
+			OverwriteProviders:       overwriteProviders,
+			ExistingOnly:             existingOnly,
+			DisableDeFiMarketMerging: disableDeFiMarketMerging,
 		},
 	)
 	if err != nil {

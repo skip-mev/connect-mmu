@@ -17,6 +17,18 @@ import (
 	"github.com/skip-mev/connect-mmu/override/update"
 )
 
+func Override(ctx context.Context, logger *zap.Logger, mmo MarketMapOverride, actual, generated mmtypes.MarketMap, options update.Options) (mmtypes.MarketMap, error) {
+	if !options.DisableDeFiMarketMerging {
+		var err error
+		generated, err = ConsolidateDeFiMarkets(logger, generated, actual)
+		if err != nil {
+			return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate defi markets: %w", err)
+		}
+		logger.Debug("successfully consolidated DeFi markets")
+	}
+	return mmo.OverrideGeneratedMarkets(ctx, logger, actual, generated, options)
+}
+
 // MarketMapOverride is an interface for overriding a generated marketmap with what is on-chain according to specific rules.
 //
 //go:generate mockery --name MarketMapOverride --filename mock_upsert_strategy.go
