@@ -34,11 +34,12 @@ func GenerateUpsertsCmd() *cobra.Command {
 }
 
 type generateUpsertsFlags struct {
-	configPath         string
-	providerDataPath   string
-	updateEnabled      bool
-	overwriteProviders bool
-	existingOnly       bool
+	configPath               string
+	providerDataPath         string
+	updateEnabled            bool
+	overwriteProviders       bool
+	existingOnly             bool
+	disableDeFiMarketMerging bool
 
 	generatedMarketMapOutPath         string
 	generatedMarketMapRemovalsOutPath string
@@ -56,6 +57,7 @@ func generateUpsertsConfigureFlags(cmd *cobra.Command, flags *generateUpsertsFla
 	cmd.Flags().BoolVar(&flags.overwriteProviders, basic.OverwriteProvidersFlag, basic.OverwriteProvidersDefault, basic.OverwriteProvidersDescription)
 	cmd.Flags().BoolVar(&flags.existingOnly, basic.ExistingOnlyFlag, basic.ExistingOnlyDefault, basic.ExistingOnlyDescription)
 	cmd.Flags().BoolVar(&flags.warnOnInvalidMarketMap, basic.WarnOnInvalidMarketMapFlag, basic.WarnOnInvalidMarketMapDefault, basic.WarnOnInvalidMarketMapDescription)
+	cmd.Flags().BoolVar(&flags.disableDeFiMarketMerging, basic.DisableDeFiMarketMerging, basic.DisableDeFiMarketMergingDefault, basic.DisableDeFiMarketMergingDescription)
 
 	cmd.Flags().StringVar(&flags.generatedMarketMapOutPath, basic.MarketMapOutPathGeneratedFlag, basic.MarketMapOutPathGeneratedDefault, basic.MarketMapOutPathGenderatedDescription)
 	cmd.Flags().StringVar(&flags.generatedMarketMapRemovalsOutPath, basic.MarketMapRemovalsOutPathFlag, basic.MarketMapRemovalsOutPathDefault, basic.MarketMapRemovalsOutPathDescription)
@@ -112,6 +114,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 		flags.updateEnabled,
 		flags.overwriteProviders,
 		flags.existingOnly,
+		flags.disableDeFiMarketMerging,
 	)
 	if err != nil {
 		return err

@@ -235,6 +235,7 @@ func (s *E2ESuite) setupDispatcher() *dispatcher.Dispatcher {
 		TxConfig: config.TransactionConfig{
 			MaxBytesPerTx: math.MaxInt,
 			MaxGas:        math.MaxInt,
+			GasAdjustment: 1.5,
 			MinGasPrice:   sdk.NewInt64DecCoin("adv4tnt", 25000000000),
 		},
 		SigningConfig: localSignerConfig,

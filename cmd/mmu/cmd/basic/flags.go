@@ -29,6 +29,10 @@ const (
 	ExistingOnlyDefault     = false
 	ExistingOnlyDescription = "should update only markets that exist in the current market map"
 
+	DisableDeFiMarketMerging            = "disable-defi-market-merging"
+	DisableDeFiMarketMergingDefault     = false
+	DisableDeFiMarketMergingDescription = "disables the merging of DeFi markets into markets that have the same CMC ID"
+
 	// upserts
 	MarketMapOverrideFlag        = "market-map"
 	MarketMapOverrideDefault     = "./tmp/override-market-map.json"

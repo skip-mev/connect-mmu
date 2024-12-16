@@ -64,24 +64,44 @@ func NewHTTPClient(apiKey string) Client {
 }
 
 // CryptoIDMap gets the cryptocurrency ID Map from CoinMarketCap using the HTTP client.
+// It handles pagination internally and returns all available cryptocurrency mappings.
 func (h *httpClient) CryptoIDMap(ctx context.Context) (CryptoIDMapResponse, error) {
 	var response CryptoIDMapResponse
+	var allData []CryptoIDMapData
 
-	opts := []http.GetOptions{
-		http.WithHeader("X-CMC_PRO_API_KEY", h.apiKey),
-		http.WithJSONAccept(),
+	start := 1
+	limit := 10000 // Current page size from CMC
+
+	for {
+		opts := []http.GetOptions{
+			http.WithHeader("X-CMC_PRO_API_KEY", h.apiKey),
+			http.WithJSONAccept(),
+			http.WithQueryParam("start", fmt.Sprintf("%d", start)),
+		}
+
+		resp, err := h.client.GetWithContext(ctx, EndpointCryptoMap, opts...)
+		if err != nil {
+			return response, err
+		}
+
+		var pageResponse CryptoIDMapResponse
+		if err := json.NewDecoder(resp.Body).Decode(&pageResponse); err != nil {
+			resp.Body.Close()
+			return response, err
+		}
+		resp.Body.Close()
+
+		allData = append(allData, pageResponse.Data...)
+
+		// If we got less than the limit, we've reached the end
+		if len(pageResponse.Data) < limit {
+			break
+		}
+
+		start += limit
 	}
 
-	resp, err := h.client.GetWithContext(ctx, EndpointCryptoMap, opts...)
-	if err != nil {
-		return response, err
-	}
-	defer resp.Body.Close()
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return response, err
-	}
-
+	response.Data = allData
 	return response, nil
 }
 

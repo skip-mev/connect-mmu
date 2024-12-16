@@ -127,6 +127,8 @@ func TestFeeds(t *testing.T) {
 		feeds, err := qr.Feeds(ctx, config.GenerateConfig{Providers: map[string]config.ProviderConfig{"coinbase": {}}})
 		require.NoError(t, err)
 		require.Len(t, feeds, 2)
+		expectedFeeds.Sort()
+		feeds.Sort()
 		require.True(t, expectedFeeds.Equal(feeds))
 	})
 }

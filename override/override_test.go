@@ -1,4 +1,4 @@
-package override_test
+package override
 
 import (
 	"context"
@@ -14,8 +14,302 @@ import (
 
 	"github.com/skip-mev/connect-mmu/client/dydx"
 	"github.com/skip-mev/connect-mmu/client/dydx/mocks"
-	"github.com/skip-mev/connect-mmu/override"
 )
+
+func TestOverride(t *testing.T) {
+	testCases := []struct {
+		name      string
+		actual    types.MarketMap
+		generated types.MarketMap
+		expected  types.MarketMap
+		options   update.Options
+	}{
+		{
+			name: "markets are consolidated",
+			actual: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+					},
+				},
+				"BAR/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAR/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+					},
+				},
+			}},
+			generated: types.MarketMap{Markets: map[string]types.Market{
+				"FOO,UNISWAP,0XUNISWAP/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO,UNISWAP,0XUNISWAP/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "uniswap"},
+					},
+				},
+				"BAZ/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAZ/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"4"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "binance"},
+					},
+				},
+			}},
+			expected: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"}, {Name: "uniswap"},
+					},
+				},
+				"BAZ/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAZ/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"4"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "binance"},
+					},
+				},
+				"BAR/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAR/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+					},
+				},
+			}},
+			options: update.Options{DisableDeFiMarketMerging: false},
+		},
+	}
+	mmo := NewCoreOverride()
+	logger := zaptest.NewLogger(t)
+	ctx := context.Background()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := Override(ctx, logger, mmo, tc.actual, tc.generated, tc.options)
+			require.NoError(t, err)
+			require.True(t, out.Equal(tc.expected), "unexpected output: %v", out)
+		})
+	}
+}
+
+func TestGetCMCIDMapping(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          types.MarketMap
+		expected    map[string]string
+		includeDeFi bool
+	}{
+		{
+			name: "CMC IDs are extracted, no DeFi",
+			in: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO/USD": {
+						Ticker:          types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"32349\"}]}"},
+						ProviderConfigs: nil,
+					},
+					"DOOM,UNISWAP,0XDOOM/USD": {
+						Ticker:          types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"33\"}]}"},
+						ProviderConfigs: nil,
+					},
+					"BAR/USD": {
+						Ticker: types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"},
+					},
+					"BAZ/USD": {},
+				},
+			},
+			includeDeFi: false,
+			expected: map[string]string{
+				"32349": "FOO/USD",
+				"2":     "BAR/USD",
+			},
+		},
+		{
+			name: "CMC IDs are extracted with DeFi",
+			in: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO,UNISWAP,0XFOO/USD": {
+						Ticker:          types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"32349\"}]}"},
+						ProviderConfigs: nil,
+					},
+					"BAR/USD": {
+						Ticker: types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"},
+					},
+					"BAZ/USD": {},
+				},
+			},
+			includeDeFi: true,
+			expected: map[string]string{
+				"32349": "FOO,UNISWAP,0XFOO/USD",
+				"2":     "BAR/USD",
+			},
+		},
+		{
+			name: "duplicates are ignored",
+			in: types.MarketMap{
+				Markets: map[string]types.Market{
+					"FOO/USD": {
+						Ticker:          types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"},
+						ProviderConfigs: nil,
+					},
+					"BAR/USD": {
+						Ticker: types.Ticker{Metadata_JSON: "{\"reference_price\":1786788632,\"liquidity\":184445,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"2\"}]}"},
+					},
+					"BAZ/USD": {},
+				},
+			},
+			expected: map[string]string{},
+		},
+	}
+
+	logger := zaptest.NewLogger(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := getCMCTickerMapping(logger, tt.in, tt.includeDeFi)
+			require.NoError(t, err)
+			for id, ticker := range out {
+				expected, ok := tt.expected[id]
+				require.True(t, ok, "unexpected output id %s, ticker %s", id, ticker)
+				require.Equal(t, expected, ticker)
+			}
+		})
+	}
+}
+
+func TestConsolidateGeneratedMarkets(t *testing.T) {
+	testCases := []struct {
+		name        string
+		generated   types.MarketMap
+		actual      types.MarketMap
+		expectedOut types.MarketMap
+	}{
+		{
+			name:        "empty does nothing",
+			generated:   types.MarketMap{},
+			actual:      types.MarketMap{},
+			expectedOut: types.MarketMap{},
+		},
+		{
+			name: "market is consolidated",
+			generated: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC,UNISWAP,0XBITCOIN/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC,UNISWAP,0XBITCOIN/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+					"FOO/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "FOO/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "kucoin"}},
+					},
+				},
+			},
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: nil,
+					},
+				},
+			},
+			expectedOut: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+					"FOO/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "FOO/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "kucoin"}},
+					},
+				},
+			},
+		},
+		{
+			name: "market is not consolidated if actual is a defi ticker.",
+			generated: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC,UNISWAP,0XBITCOIN/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC,UNISWAP,0XBITCOIN/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+				},
+			},
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC,RAYDIUM,03231/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC,RAYDIUM,03231/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "raydium"}},
+					},
+				},
+			},
+			expectedOut: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC,UNISWAP,0XBITCOIN/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:  makeCurrencyPair(t, "BTC,UNISWAP,0XBITCOIN/USD"),
+							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+						},
+						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
+					},
+				},
+			},
+		},
+	}
+
+	logger := zaptest.NewLogger(t)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := ConsolidateDeFiMarkets(logger, tc.generated, tc.actual)
+			require.NoError(t, err)
+			require.True(t, tc.expectedOut.Equal(out))
+		})
+	}
+}
+
+func makeCurrencyPair(t *testing.T, s string) connecttypes.CurrencyPair {
+	t.Helper()
+	cp, err := connecttypes.CurrencyPairFromString(s)
+	require.NoError(t, err)
+	return cp
+}
 
 func TestOverrideMarketMap(t *testing.T) {
 	mockClient := mocks.NewClient(t)
@@ -1803,7 +2097,7 @@ func TestOverrideMarketMap(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// set up mocks
 			tt.expect(tt.client)
-			marketOverride, err := override.NewDyDxOverride(tt.client)
+			marketOverride, err := NewDyDxOverride(tt.client)
 			if tt.wantInitErr {
 				require.Error(t, err)
 				return
@@ -3542,7 +3836,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// set up mocks
 			tt.expect(tt.client)
-			marketOverride, err := override.NewDyDxOverride(tt.client)
+			marketOverride, err := NewDyDxOverride(tt.client)
 			if tt.wantInitErr {
 				require.Error(t, err)
 				return
