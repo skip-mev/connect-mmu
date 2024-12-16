@@ -7,13 +7,14 @@ COPY . .
 RUN go build -o build/ ./...
 RUN make install-sentry
 
-# install slinky v1.0.12
+# install slinky v1.0.12 for the OS + architecture of the current machine
 COPY scripts/install_slinky.sh /tmp/
-RUN chmod +x /tmp/install_slinky.sh && /tmp/install_slinky.sh
+RUN chmod +x /tmp/install_slinky.sh && /tmp/install_slinky.sh $(uname -s | tr '[:upper:]' '[:lower:]') $(uname -m) 
 
-# install a bunch of connect versions. the script will install v2.0.0 and onwards.
+# install a bunch of connect versions for the OS + architecture of the current machine.
+# the script will install v2.0.0 and onwards.
 COPY scripts/install_all_connects.sh /tmp/
-RUN chmod +x /tmp/install_all_connects.sh && /tmp/install_all_connects.sh
+RUN chmod +x /tmp/install_all_connects.sh && /tmp/install_all_connects.sh $(uname -s | tr '[:upper:]' '[:lower:]') $(uname -m) 
 
 FROM ubuntu:rolling
 COPY --from=builder /src/connect-mmu/build/mmu /usr/local/bin/
