@@ -6,9 +6,10 @@ import (
 )
 
 type Options struct {
-	UpdateEnabled      bool
-	OverwriteProviders bool
-	ExistingOnly       bool
+	UpdateEnabled            bool
+	OverwriteProviders       bool
+	ExistingOnly             bool
+	DisableDeFiMarketMerging bool
 }
 
 // CombineMarketMaps adds the given generated markets to the actual market.

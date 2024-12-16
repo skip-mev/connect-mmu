@@ -58,6 +58,7 @@ func OverrideCmd() *cobra.Command {
 				flags.updateEnabled,
 				flags.overwriteProviders,
 				flags.existingOnly,
+				flags.disableDeFiMarketMerging,
 			)
 			if err != nil {
 				return err
@@ -83,12 +84,13 @@ func OverrideCmd() *cobra.Command {
 }
 
 type overrideCmdFlags struct {
-	configPath         string
-	marketMapPath      string
-	marketMapOutPath   string
-	updateEnabled      bool
-	overwriteProviders bool
-	existingOnly       bool
+	configPath               string
+	marketMapPath            string
+	marketMapOutPath         string
+	updateEnabled            bool
+	overwriteProviders       bool
+	existingOnly             bool
+	disableDeFiMarketMerging bool
 }
 
 func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
@@ -97,6 +99,7 @@ func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
 	cmd.Flags().BoolVar(&flags.updateEnabled, UpdateEnabledFlag, UpdateEnabledDefault, UpdateEnabledDescription)
 	cmd.Flags().BoolVar(&flags.overwriteProviders, OverwriteProvidersFlag, OverwriteProvidersDefault, OverwriteProvidersDescription)
 	cmd.Flags().BoolVar(&flags.existingOnly, ExistingOnlyFlag, ExistingOnlyDefault, ExistingOnlyDescription)
+	cmd.Flags().BoolVar(&flags.disableDeFiMarketMerging, DisableDeFiMarketMerging, DisableDeFiMarketMergingDefault, DisableDeFiMarketMergingDescription)
 
 	cmd.Flags().StringVar(&flags.marketMapOutPath, MarketMapOutPathOverrideFlag, MarketMapOutPathOverrideDefault, MarketMapOutPathOverrideDescription)
 }
@@ -106,7 +109,7 @@ func OverrideMarketsFromConfig(
 	logger *zap.Logger,
 	cfg config.ChainConfig,
 	generated mmtypes.MarketMap,
-	updateEnabled, overwriteProviders, existingOnly bool,
+	updateEnabled, overwriteProviders, existingOnly, disableDeFiMarketMerging bool,
 ) (mmtypes.MarketMap, error) {
 	// create client based on config
 	mmClient, err := marketmapclient.NewClientFromChainConfig(logger, cfg)
@@ -133,15 +136,17 @@ func OverrideMarketsFromConfig(
 		}
 	}
 
-	overriddenMarketMap, err := marketOverride.OverrideGeneratedMarkets(
+	overriddenMarketMap, err := override.Override(
 		ctx,
 		logger,
+		marketOverride,
 		onChainMarketMap,
 		generated,
 		update.Options{
-			UpdateEnabled:      updateEnabled,
-			OverwriteProviders: overwriteProviders,
-			ExistingOnly:       existingOnly,
+			UpdateEnabled:            updateEnabled,
+			OverwriteProviders:       overwriteProviders,
+			ExistingOnly:             existingOnly,
+			DisableDeFiMarketMerging: disableDeFiMarketMerging,
 		},
 	)
 	if err != nil {
