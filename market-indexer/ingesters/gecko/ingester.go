@@ -124,6 +124,10 @@ func (ig *Ingester) GetProviderMarkets(ctx context.Context) ([]provider.CreatePr
 			if err != nil {
 				return nil, err
 			}
+			liquidity, err := pool.Liquidity()
+			if err != nil {
+				return nil, err
+			}
 
 			targetBase, err := pool.Base()
 			if err != nil {
@@ -145,13 +149,15 @@ func (ig *Ingester) GetProviderMarkets(ctx context.Context) ([]provider.CreatePr
 
 			market := provider.CreateProviderMarket{
 				Create: provider.CreateProviderMarketParams{
-					TargetBase:     targetBase,
-					TargetQuote:    targetQuote,
-					OffChainTicker: offChainTicker,
-					ProviderName:   geckoDexToConnectDex(pool.Venue()),
-					QuoteVolume:    quoteVolF64,
-					MetadataJSON:   metaDataBz,
-					ReferencePrice: refPrice,
+					TargetBase:       targetBase,
+					TargetQuote:      targetQuote,
+					OffChainTicker:   offChainTicker,
+					ProviderName:     geckoDexToConnectDex(pool.Venue()),
+					QuoteVolume:      quoteVolF64,
+					MetadataJSON:     metaDataBz,
+					ReferencePrice:   refPrice,
+					NegativeDepthTwo: liquidity / 2,
+					PositiveDepthTwo: liquidity / 2,
 				},
 				BaseAddress:  pool.BaseAddress(),
 				QuoteAddress: pool.QuoteAddress(),

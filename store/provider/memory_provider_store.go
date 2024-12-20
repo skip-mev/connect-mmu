@@ -129,6 +129,11 @@ func (w *MemoryStore) updateProviderMarket(params CreateProviderMarketParams, id
 	if !ok {
 		return ProviderMarket{}, errors.New("attempted to update provider market at invalid id")
 	}
+	// Don't overwrite if the quote volume is lower.
+	// e.g. we can have multiple provider markets for the same uniswap ticker because there can be multiple fee pools
+	if providerMarket.QuoteVolume > params.QuoteVolume {
+		return *providerMarket, nil
+	}
 
 	providerMarket.QuoteVolume = params.QuoteVolume
 	providerMarket.BaseAssetInfoID = params.BaseAssetInfoID
@@ -136,6 +141,7 @@ func (w *MemoryStore) updateProviderMarket(params CreateProviderMarketParams, id
 	providerMarket.ReferencePrice = params.ReferencePrice
 	providerMarket.NegativeDepthTwo = params.NegativeDepthTwo
 	providerMarket.PositiveDepthTwo = params.PositiveDepthTwo
+	providerMarket.MetadataJSON = string(params.MetadataJSON)
 
 	return *providerMarket, nil
 }

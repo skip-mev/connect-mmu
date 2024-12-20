@@ -122,7 +122,9 @@ func (c *geckoClientImpl) TopPools(ctx context.Context, network, dex string, pag
 	if page <= 0 || page > maxPages {
 		return nil, fmt.Errorf("page must be between 1 and %d", maxPages)
 	}
-	endpoint := fmt.Sprintf("%s/networks/%s/dexes/%s/pools?page=%d", c.baseEndpoint, network, dex, page)
+
+	sortOption := "h24_volume_usd_desc"
+	endpoint := fmt.Sprintf("%s/networks/%s/dexes/%s/pools?page=%d&sort=%s", c.baseEndpoint, network, dex, page, sortOption)
 	c.logger.Debug("getting top pools", zap.String("network", network), zap.String("dex", dex), zap.Int("page", page))
 	resp, err := c.GetWithContext(ctx, endpoint)
 	if err != nil {
@@ -135,6 +137,16 @@ func (c *geckoClientImpl) TopPools(ctx context.Context, network, dex string, pag
 	}
 
 	return &poolsRes, nil
+}
+
+// TODO: Use this and deprecate QuoteVolume in PR to switch all volumes to USD-based
+// UsdVolume returns the 24h USD volume.
+func (p *PoolData) UsdVolume() (*big.Float, error) {
+	h24VolUSD, _ := new(big.Float).SetString(p.Attributes.VolumeUsd.H24)
+	if h24VolUSD == nil {
+		return nil, fmt.Errorf("unable to convert VolumeUsd.H24 to big.Float: %s", p.Attributes.VolumeUsd.H24)
+	}
+	return h24VolUSD, nil
 }
 
 // QuoteVolume returns the 24h quote volume.
@@ -237,6 +249,14 @@ func (p *PoolData) ReferencePrice() (float64, error) {
 		return 0, fmt.Errorf("geckoClientImpl: failed to parse reference price: %w", err)
 	}
 	return ref, nil
+}
+
+func (p *PoolData) Liquidity() (float64, error) {
+	liquidity, err := strconv.ParseFloat(p.Attributes.ReserveInUsd, 64)
+	if err != nil {
+		return 0, fmt.Errorf("geckoClientImpl: failed to parse liquidity: %w", err)
+	}
+	return liquidity, nil
 }
 
 func (p *PoolData) OffChainTicker() (string, error) {

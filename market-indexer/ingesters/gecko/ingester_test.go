@@ -91,6 +91,8 @@ func TestGetProviderMarkets(t *testing.T) {
 	require.NoError(t, err)
 	offChainTicker0, err := pools.Data[0].OffChainTicker()
 	require.NoError(t, err)
+	liquidity0, err := pools.Data[0].Liquidity()
+	require.NoError(t, err)
 
 	targetBase1, err := pools.Data[1].Base()
 	require.NoError(t, err)
@@ -98,31 +100,37 @@ func TestGetProviderMarkets(t *testing.T) {
 	require.NoError(t, err)
 	offChainTicker1, err := pools.Data[1].OffChainTicker()
 	require.NoError(t, err)
+	liquidity1, err := pools.Data[1].Liquidity()
+	require.NoError(t, err)
 
 	// should end up with these markets.
 	baseMarkets := []provider.CreateProviderMarket{
 		{
 			Create: provider.CreateProviderMarketParams{
-				TargetBase:     targetBase0,
-				TargetQuote:    targetQuote0,
-				OffChainTicker: offChainTicker0,
-				ProviderName:   geckoDexToConnectDex(pools.Data[0].Venue()),
-				QuoteVolume:    281462633.1550315,
-				MetadataJSON:   metaData1Bz,
-				ReferencePrice: 3409.83,
+				TargetBase:       targetBase0,
+				TargetQuote:      targetQuote0,
+				OffChainTicker:   offChainTicker0,
+				ProviderName:     geckoDexToConnectDex(pools.Data[0].Venue()),
+				QuoteVolume:      281462633.1550315,
+				MetadataJSON:     metaData1Bz,
+				ReferencePrice:   3409.83,
+				NegativeDepthTwo: liquidity0 / 2,
+				PositiveDepthTwo: liquidity0 / 2,
 			},
 			BaseAddress:  pools.Data[0].BaseAddress(),
 			QuoteAddress: pools.Data[0].QuoteAddress(),
 		},
 		{
 			Create: provider.CreateProviderMarketParams{
-				TargetBase:     targetBase1,
-				TargetQuote:    targetQuote1,
-				OffChainTicker: offChainTicker1,
-				ProviderName:   geckoDexToConnectDex(pools.Data[1].Venue()),
-				QuoteVolume:    3639.743321519964,
-				MetadataJSON:   metaData2Bz,
-				ReferencePrice: 0.000000001585379138,
+				TargetBase:       targetBase1,
+				TargetQuote:      targetQuote1,
+				OffChainTicker:   offChainTicker1,
+				ProviderName:     geckoDexToConnectDex(pools.Data[1].Venue()),
+				QuoteVolume:      3639.743321519964,
+				MetadataJSON:     metaData2Bz,
+				ReferencePrice:   0.000000001585379138,
+				NegativeDepthTwo: liquidity1 / 2,
+				PositiveDepthTwo: liquidity1 / 2,
 			},
 			BaseAddress:  pools.Data[1].BaseAddress(),
 			QuoteAddress: pools.Data[1].QuoteAddress(),

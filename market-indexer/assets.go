@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
@@ -141,9 +142,18 @@ func CryptoAssetInfoFromData(data coinmarketcap.WrappedCryptoIDMapData) (provide
 	var multiAddresses [][]string //nolint:prealloc
 
 	for _, contractAddress := range data.Info.ContractAddress {
+		assetSlug := contractAddress.Platform.Coin.Slug
+		contractAddressValue := contractAddress.ContractAddress
+
+		// CoinGecko lowercases their EVM addresses. EVM addresses are case-insensitive.
+		// Solana addresses are case-sensitive
+		if assetSlug == "base" || assetSlug == "ethereum" {
+			contractAddressValue = strings.ToLower(contractAddressValue)
+		}
+
 		assetAddress := utils.AssetAddress{
 			Venue:   contractAddress.Platform.Name,
-			Address: contractAddress.ContractAddress,
+			Address: contractAddressValue,
 		}
 
 		multiAddresses = append(multiAddresses, assetAddress.ToArray())

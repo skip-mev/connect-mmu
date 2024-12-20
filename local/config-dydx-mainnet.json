@@ -17,7 +17,7 @@
     ],
     "coinmarketcap": { "api_key": "" },
     "raydium": null,
-    "gecko_network_dex_pairs": [{ "network": "eth", "dex": "uniswap_v3" }]
+    "gecko_network_dex_pairs": [{ "network": "eth", "dex": "uniswap_v3" }, { "network": "base", "dex": "uniswap-v3-base" }]
   },
   "generate": {
     "providers": {
