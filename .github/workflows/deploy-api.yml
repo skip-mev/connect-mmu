@@ -1,0 +1,61 @@
+name: Deploy API
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+    secrets:
+      aws_access_key_id:
+        required: true
+      aws_secret_access_key:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy_api:
+    name: Deploy ${{ inputs.env }} API source .zip to S3
+    runs-on: ubuntu-latest
+
+    # Cancel any concurrent deploys for this Lambda that are already in progress
+    concurrency:
+      group: ci-deploy-${{ inputs.env }}-market-map-updater-api
+      cancel-in-progress: true
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.aws_access_key_id }}
+        aws-secret-access-key: ${{ secrets.aws_secret_access_key }}
+        aws-region: ap-northeast-1
+
+    - name: Get SHA-256 hash of source files
+      id: src_hash
+      run: |
+        SRC_HASH=$(openssl dgst -binary -sha256 ./api/main.go | openssl base64 | tr -d '\n')
+        echo "SRC_HASH=$SRC_HASH" >> "$GITHUB_OUTPUT"
+
+    - name: Go build
+      run: |
+        env GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap ./api/main.go
+
+    - name: Zip API source and deps
+      run: |
+        zip market-map-updater-api.zip bootstrap
+
+    # Upload .zip archive to S3, with SHA-256 hash of the source files as metadata.
+    # This hash serves as the "fingerprint" of the Lambda .zip, and will be read by v4-terraform to detect when to update the Lambda
+    # We can't rely on S3's built-in checksum of the full uploaded .zip, as it contains unstable metadata (ex. timestamps on installed dependency files)
+    # It also seems that Terraform does not correctly detect updates to S3 checksum + Lambda source_code_hash built-ins anyways
+    # See here for more info: https://stackoverflow.com/a/69410250
+    - name: Upload API .zip to S3, with hash metadata
+      env:
+        SRC_HASH: ${{ steps.src_hash.outputs.SRC_HASH }}
+      run: aws s3 cp market-map-updater-api.zip s3://${{ inputs.env }}-market-map-updater-source/market-map-updater-api.zip --metadata hash=$SRC_HASH

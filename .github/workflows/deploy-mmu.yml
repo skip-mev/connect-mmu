@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy MMU
 
 on:
   workflow_call:
@@ -22,8 +22,8 @@ permissions:
   contents: read
 
 jobs:
-  deploy_ecr:
-    name: Deploy ${{ inputs.env }} image to ECR
+  deploy_mmu:
+    name: Deploy ${{ inputs.env }} MMU image to ECR
     runs-on: ubuntu-latest
 
     # Cancel any concurrent deploys that are already in progress

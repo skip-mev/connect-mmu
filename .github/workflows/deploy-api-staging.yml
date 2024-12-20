@@ -1,4 +1,4 @@
-name: Deploy Staging
+name: Deploy Staging API
 
 on:
   push:
@@ -9,12 +9,10 @@ permissions:
 
 jobs:
   deploy_staging:
-    name: Deploy Staging
-    uses: ./.github/workflows/deploy.yml
+    name: Deploy Staging API
+    uses: ./.github/workflows/deploy-api.yml
     with:
       env: "staging"
-      ecr_url: "677285201534.dkr.ecr.ap-northeast-1.amazonaws.com"
-      ecr_repo_name: "staging-market-map-updater"
     secrets:
       aws_access_key_id: ${{ secrets['STAGING_MARKET_MAP_UPDATER_AWS_ACCESS_KEY_ID'] }}
       aws_secret_access_key: ${{ secrets['STAGING_MARKET_MAP_UPDATER_AWS_SECRET_ACCESS_KEY'] }}

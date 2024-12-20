@@ -1,4 +1,4 @@
-name: Deploy Mainnet
+name: Deploy Mainnet MMU
 
 on:
   push:
@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   deploy_mainnet:
-    name: Deploy Mainnet
-    uses: ./.github/workflows/deploy.yml
+    name: Deploy Mainnet MMU
+    uses: ./.github/workflows/deploy-mmu.yml
     with:
       env: "mainnet"
       ecr_url: "332066407361.dkr.ecr.ap-northeast-1.amazonaws.com"
