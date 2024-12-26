@@ -498,9 +498,9 @@ func PruneByProviderLiquidity() TransformFeed {
 	}
 }
 
-// PruneByProviderVolume removes feeds that don't meet provider-specific volume thresholds.
+// PruneByProviderUsdVolume removes feeds that don't meet provider-specific USD volume thresholds.
 // Each provider can specify a min_provider_volume threshold in the config.
-func PruneByProviderVolume() TransformFeed {
+func PruneByProviderUsdVolume() TransformFeed {
 	return func(_ context.Context, logger *zap.Logger, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds, types.RemovalReasons, error) {
 		logger.Info("pruning by provider volume", zap.Int("feeds", len(feeds)))
 
@@ -515,18 +515,18 @@ func PruneByProviderVolume() TransformFeed {
 				continue
 			}
 
-			dailyQuoteVolumeFloat, _ := feed.DailyQuoteVolume.Float64()
-			if found && dailyQuoteVolumeFloat >= providerCfg.MinProviderVolume {
+			dailyUsdVolumeFloat, _ := feed.DailyUsdVolume.Float64()
+			if found && dailyUsdVolumeFloat >= providerCfg.MinProviderVolume {
 				out = append(out, feed)
 				continue
 			}
 
 			var reason string
 			if !found {
-				reason = "PruneByProviderVolume: Not Found"
-			} else if dailyQuoteVolumeFloat < providerCfg.MinProviderVolume {
-				reason = fmt.Sprintf("PruneByProviderVolume: Volume24H: %f, MinProviderVolume: %f",
-					dailyQuoteVolumeFloat,
+				reason = "PruneByProviderUsdVolume: Not Found"
+			} else if dailyUsdVolumeFloat < providerCfg.MinProviderVolume {
+				reason = fmt.Sprintf("PruneByProviderUsdVolume: Volume24H: %f, MinProviderVolume: %f",
+					dailyUsdVolumeFloat,
 					providerCfg.MinProviderVolume,
 				)
 			}

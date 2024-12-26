@@ -265,6 +265,10 @@ func addPairDataToCreateProviderMarket(
 		create.Create.QuoteVolume = data.QuoteVolume
 	}
 
+	if create.Create.UsdVolume == 0 {
+		create.Create.UsdVolume = data.UsdVolume
+	}
+
 	if create.Create.ReferencePrice == 0 {
 		create.Create.ReferencePrice = data.ReferencePrice
 	}

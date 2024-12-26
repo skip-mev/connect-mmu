@@ -93,6 +93,8 @@ func TestGetProviderMarkets(t *testing.T) {
 	require.NoError(t, err)
 	liquidity0, err := pools.Data[0].Liquidity()
 	require.NoError(t, err)
+	usdVolume0, err := pools.Data[0].UsdVolume()
+	require.NoError(t, err)
 
 	targetBase1, err := pools.Data[1].Base()
 	require.NoError(t, err)
@@ -101,6 +103,8 @@ func TestGetProviderMarkets(t *testing.T) {
 	offChainTicker1, err := pools.Data[1].OffChainTicker()
 	require.NoError(t, err)
 	liquidity1, err := pools.Data[1].Liquidity()
+	require.NoError(t, err)
+	usdVolume1, err := pools.Data[1].UsdVolume()
 	require.NoError(t, err)
 
 	// should end up with these markets.
@@ -112,6 +116,7 @@ func TestGetProviderMarkets(t *testing.T) {
 				OffChainTicker:   offChainTicker0,
 				ProviderName:     geckoDexToConnectDex(pools.Data[0].Venue()),
 				QuoteVolume:      281462633.1550315,
+				UsdVolume:        usdVolume0,
 				MetadataJSON:     metaData1Bz,
 				ReferencePrice:   3409.83,
 				NegativeDepthTwo: liquidity0 / 2,
@@ -127,6 +132,7 @@ func TestGetProviderMarkets(t *testing.T) {
 				OffChainTicker:   offChainTicker1,
 				ProviderName:     geckoDexToConnectDex(pools.Data[1].Venue()),
 				QuoteVolume:      3639.743321519964,
+				UsdVolume:        usdVolume1,
 				MetadataJSON:     metaData2Bz,
 				ReferencePrice:   0.000000001585379138,
 				NegativeDepthTwo: liquidity1 / 2,

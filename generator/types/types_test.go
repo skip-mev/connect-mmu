@@ -50,10 +50,10 @@ func TestCompareFeed(t *testing.T) {
 
 	cmcInfo := mmutypes.CoinMarketCapInfo{}
 
-	feedA := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeA, 0, liquidityInfoA, cmcInfo)
-	feedC := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeB, 0, liquidityInfoB, cmcInfo)
-	feedD := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeA, 0, liquidityInfo0, cmcInfo)
-	feedE := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeB, 0, liquidityInfo0, cmcInfo)
+	feedA := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeA, volumeA, 0, liquidityInfoA, cmcInfo)
+	feedC := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeB, volumeB, 0, liquidityInfoB, cmcInfo)
+	feedD := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeA, volumeA, 0, liquidityInfo0, cmcInfo)
+	feedE := types.NewFeed(marketA.Ticker, marketA.ProviderConfigs[0], volumeB, volumeB, 0, liquidityInfo0, cmcInfo)
 
 	tests := []struct {
 		name        string

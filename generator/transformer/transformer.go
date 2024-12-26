@@ -30,7 +30,7 @@ func New(logger *zap.Logger) Transformer {
 			PruneByLiquidity(),
 			PruneByQuoteVolume(),
 			PruneByProviderLiquidity(),
-			PruneByProviderVolume(),
+			PruneByProviderUsdVolume(),
 			ResolveNamingAliases(),
 			NormalizeBy(),
 			DropFeedsWithoutAggregatorIDs(),

@@ -36,6 +36,7 @@ var usdtusdFeed = types.Feed{
 	},
 	ReferencePrice:   big.NewFloat(1.1),
 	DailyQuoteVolume: big.NewFloat(400),
+	DailyUsdVolume:   big.NewFloat(400),
 	CMCInfo: mmutypes.CoinMarketCapInfo{
 		BaseID:    825,
 		QuoteID:   2781,
@@ -97,6 +98,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(1.1),
 					CMCInfo:          cmcInfoA,
 				},
@@ -121,6 +123,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(1.1),
 					CMCInfo:          cmcInfoA,
 				},
@@ -150,6 +153,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(100),
 					CMCInfo:          cmcInfoA,
 				},
@@ -174,6 +178,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(0.01),
 					CMCInfo:          cmcInfoAInverted,
 				},
@@ -204,6 +209,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(100),
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					CMCInfo:          cmcInfoA,
 				},
 				usdtusdFeed,
@@ -233,6 +239,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(110.00000000000001),
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					CMCInfo:          cmcInfoA,
 				},
 			},
@@ -261,6 +268,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(1),
 					CMCInfo:          cmcInfoA,
 				},
@@ -290,6 +298,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON: "",
 					},
 					DailyQuoteVolume: big.NewFloat(200),
+					DailyUsdVolume:   big.NewFloat(200),
 					ReferencePrice:   big.NewFloat(1.1),
 					CMCInfo:          cmcInfoAInverted,
 				},
@@ -319,6 +328,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 						Metadata_JSON:   "",
 					},
 					DailyQuoteVolume: big.NewFloat(1),
+					DailyUsdVolume:   big.NewFloat(100000),
 					ReferencePrice:   big.NewFloat(100),
 					CMCInfo:          cmcInfoA,
 				},
@@ -353,6 +363,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(0.011000000000000001),
 					DailyQuoteVolume: big.NewFloat(1),
+					DailyUsdVolume:   big.NewFloat(100000),
 					CMCInfo:          cmcInfoA,
 				},
 			},
@@ -383,6 +394,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(100),
 					DailyQuoteVolume: big.NewFloat(2200),
+					DailyUsdVolume:   big.NewFloat(220000000),
 					CMCInfo:          cmcInfoAInverted,
 				},
 				{
@@ -405,6 +417,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(100),
 					DailyQuoteVolume: big.NewFloat(0),
+					DailyUsdVolume:   big.NewFloat(0),
 					CMCInfo:          cmcInfoA,
 				},
 				usdtusdFeed,
@@ -434,6 +447,7 @@ func TestDefaultTransformer_TransformFeeds(t *testing.T) {
 					},
 					ReferencePrice:   big.NewFloat(0.011000000000000001),
 					DailyQuoteVolume: big.NewFloat(2200),
+					DailyUsdVolume:   big.NewFloat(220000000),
 					CMCInfo:          cmcInfoA,
 				},
 			},
@@ -900,7 +914,7 @@ func TestPruneByProviderLiquidity(t *testing.T) {
 	}
 }
 
-func TestPruneByProviderVolume(t *testing.T) {
+func TestPruneByProviderUsdVolume(t *testing.T) {
 	tests := []struct {
 		name            string
 		feeds           types.Feeds
@@ -917,6 +931,7 @@ func TestPruneByProviderVolume(t *testing.T) {
 						Name: krakenProvider,
 					},
 					DailyQuoteVolume: big.NewFloat(100),
+					DailyUsdVolume:   big.NewFloat(100),
 				},
 			},
 			config: config.GenerateConfig{
@@ -934,6 +949,7 @@ func TestPruneByProviderVolume(t *testing.T) {
 						Name: krakenProvider,
 					},
 					DailyQuoteVolume: big.NewFloat(100),
+					DailyUsdVolume:   big.NewFloat(100),
 				},
 			},
 			expectedRemoved: 0,
@@ -947,6 +963,7 @@ func TestPruneByProviderVolume(t *testing.T) {
 						Name: krakenProvider,
 					},
 					DailyQuoteVolume: big.NewFloat(100),
+					DailyUsdVolume:   big.NewFloat(100),
 				},
 			},
 			config: config.GenerateConfig{
@@ -967,7 +984,8 @@ func TestPruneByProviderVolume(t *testing.T) {
 					ProviderConfig: mmtypes.ProviderConfig{
 						Name: krakenProvider,
 					},
-					DailyQuoteVolume: big.NewFloat(2000),
+					DailyQuoteVolume: big.NewFloat(1),
+					DailyUsdVolume:   big.NewFloat(2000),
 				},
 			},
 			config: config.GenerateConfig{
@@ -983,7 +1001,8 @@ func TestPruneByProviderVolume(t *testing.T) {
 					ProviderConfig: mmtypes.ProviderConfig{
 						Name: krakenProvider,
 					},
-					DailyQuoteVolume: big.NewFloat(2000),
+					DailyQuoteVolume: big.NewFloat(1),
+					DailyUsdVolume:   big.NewFloat(2000),
 				},
 			},
 			expectedRemoved: 0,
@@ -993,7 +1012,7 @@ func TestPruneByProviderVolume(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			logger := zaptest.NewLogger(t)
-			transform := transformer.PruneByProviderVolume()
+			transform := transformer.PruneByProviderUsdVolume()
 			feeds, removals, err := transform(context.Background(), logger, tc.config, tc.feeds)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedFeeds, feeds)

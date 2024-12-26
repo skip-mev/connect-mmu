@@ -69,6 +69,8 @@ type Feed struct {
 	ProviderConfig mmtypes.ProviderConfig
 	// DailyLiquidity is the 24-hour volume in terms of the quote.
 	DailyQuoteVolume *big.Float
+	// DailyUsdVolume is the 24-hour volume in USD
+	DailyUsdVolume *big.Float
 	// ReferencePrice is the reference price of the base asset in terms of the quote.
 	ReferencePrice *big.Float
 	// CMCInfo contains coinmarketcap specific information
@@ -80,7 +82,7 @@ type Feed struct {
 func NewFeed(
 	t mmtypes.Ticker,
 	pc mmtypes.ProviderConfig,
-	volume, referencePrice float64,
+	quoteVolume, usdVolume, referencePrice float64,
 	liquidityInfo types.LiquidityInfo,
 	cmcInfo types.CoinMarketCapInfo,
 ) Feed {
@@ -90,7 +92,8 @@ func NewFeed(
 	return Feed{
 		Ticker:           t,
 		ProviderConfig:   pc,
-		DailyQuoteVolume: big.NewFloat(volume),
+		DailyQuoteVolume: big.NewFloat(quoteVolume),
+		DailyUsdVolume:   big.NewFloat(usdVolume),
 		LiquidityInfo:    liquidityInfo,
 		ReferencePrice:   big.NewFloat(referencePrice),
 		CMCInfo:          cmcInfo,

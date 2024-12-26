@@ -139,14 +139,15 @@ func (c *geckoClientImpl) TopPools(ctx context.Context, network, dex string, pag
 	return &poolsRes, nil
 }
 
-// TODO: Use this and deprecate QuoteVolume in PR to switch all volumes to USD-based
 // UsdVolume returns the 24h USD volume.
-func (p *PoolData) UsdVolume() (*big.Float, error) {
-	h24VolUSD, _ := new(big.Float).SetString(p.Attributes.VolumeUsd.H24)
-	if h24VolUSD == nil {
-		return nil, fmt.Errorf("unable to convert VolumeUsd.H24 to big.Float: %s", p.Attributes.VolumeUsd.H24)
+func (p *PoolData) UsdVolume() (float64, error) {
+	h24VolUSD, ok := new(big.Float).SetString(p.Attributes.VolumeUsd.H24)
+	if !ok {
+		return 0, fmt.Errorf("unable to convert VolumeUsd.H24 to big.Float: %s", p.Attributes.VolumeUsd.H24)
 	}
-	return h24VolUSD, nil
+
+	vol, _ := h24VolUSD.Float64()
+	return vol, nil
 }
 
 // QuoteVolume returns the 24h quote volume.

@@ -99,6 +99,7 @@ func toFeed(pm provider.GetFilteredProviderMarketsRow, cfg config.GenerateConfig
 		ticker,
 		providerConfig,
 		pm.QuoteVolume,
+		pm.UsdVolume,
 		pm.ReferencePrice,
 		liquidityInfo,
 		cmcInfo,

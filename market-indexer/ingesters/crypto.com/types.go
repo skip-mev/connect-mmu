@@ -78,6 +78,11 @@ func (d *InstrumentsData) toProviderMarket(ticker TickerData) (provider.CreatePr
 		return provider.CreateProviderMarket{}, err
 	}
 
+	usdVol, err := strconv.ParseFloat(ticker.Vv, 64)
+	if err != nil {
+		return provider.CreateProviderMarket{}, err
+	}
+
 	refPrice, err := strconv.ParseFloat(ticker.LatestPrice, 64)
 	if err != nil {
 		return provider.CreateProviderMarket{}, fmt.Errorf("failed to convert latest price to float: %w", err)
@@ -102,6 +107,7 @@ func (d *InstrumentsData) toProviderMarket(ticker TickerData) (provider.CreatePr
 			OffChainTicker: d.Symbol,
 			ProviderName:   ProviderName,
 			QuoteVolume:    quoteVol,
+			UsdVolume:      usdVol,
 			ReferencePrice: refPrice,
 		},
 	}

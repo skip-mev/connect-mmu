@@ -29,6 +29,7 @@ type ProviderMarket struct {
 	OffChainTicker   string  `json:"off_chain_ticker"`
 	ProviderName     string  `json:"provider_name"`
 	QuoteVolume      float64 `json:"quote_volume"`
+	UsdVolume        float64 `json:"usd_volume"`
 	BaseAssetInfoID  int32   `json:"base_asset_info_id"`
 	QuoteAssetInfoID int32   `json:"quote_asset_info_id"`
 	MetadataJSON     string  `json:"metadata_json"`
@@ -101,6 +102,7 @@ type CreateProviderMarketParams struct {
 	OffChainTicker   string
 	ProviderName     string
 	QuoteVolume      float64
+	UsdVolume        float64
 	BaseAssetInfoID  int32
 	QuoteAssetInfoID int32
 	MetadataJSON     []byte
@@ -119,6 +121,7 @@ type GetFilteredProviderMarketsRow struct {
 	OffChainTicker   string
 	ProviderName     string
 	QuoteVolume      float64
+	UsdVolume        float64
 	MetadataJSON     []byte
 	ReferencePrice   float64
 	NegativeDepthTwo float64

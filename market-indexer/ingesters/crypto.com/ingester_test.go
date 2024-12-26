@@ -79,6 +79,7 @@ func TestIngesterIgnoresPerpMarkets(t *testing.T) {
 					L:           "2000",
 					I:           "BTC_USD",
 					V:           "1000",
+					Vv:          "10000",
 					LatestPrice: "12.2352356",
 				},
 			},
@@ -94,6 +95,7 @@ func TestIngesterIgnoresPerpMarkets(t *testing.T) {
 	require.Equal(t, "BTC", markets[0].Create.TargetBase)
 	require.Equal(t, "USD", markets[0].Create.TargetQuote)
 	require.Equal(t, float64(3000000), markets[0].Create.QuoteVolume)
+	require.Equal(t, float64(10000), markets[0].Create.UsdVolume)
 	require.Equal(t, 12.2352356, markets[0].Create.ReferencePrice)
 }
 
