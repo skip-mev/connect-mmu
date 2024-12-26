@@ -40,7 +40,7 @@
       "bitstamp_api": {
         "isSupplemental": false,
         "require_aggregate_ids": false,
-        "ignore_liquidity": true,
+        "ignore_liquidity": false,
         "ignore_volume": false,
         "min_provider_volume": 100000,
         "min_provider_liquidity": 10000
@@ -48,7 +48,7 @@
       "bybit_ws": {
         "isSupplemental": false,
         "require_aggregate_ids": false,
-        "ignore_liquidity": true,
+        "ignore_liquidity": false,
         "ignore_volume": false,
         "min_provider_volume": 100000,
         "min_provider_liquidity": 10000
@@ -64,7 +64,7 @@
       "crypto_dot_com_ws": {
         "isSupplemental": false,
         "require_aggregate_ids": false,
-        "ignore_liquidity": true,
+        "ignore_liquidity": false,
         "ignore_volume": false,
         "min_provider_volume": 100000,
         "min_provider_liquidity": 10000
@@ -102,6 +102,14 @@
         "min_provider_liquidity": 10000
       },
       "okx_ws": {
+        "isSupplemental": false,
+        "require_aggregate_ids": false,
+        "ignore_liquidity": false,
+        "ignore_volume": false,
+        "min_provider_volume": 100000,
+        "min_provider_liquidity": 10000
+      },
+      "mexc_ws": {
         "isSupplemental": false,
         "require_aggregate_ids": false,
         "ignore_liquidity": false,

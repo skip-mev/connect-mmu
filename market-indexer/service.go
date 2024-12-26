@@ -42,23 +42,26 @@ type Indexer struct {
 
 	// knownAssets is a local cache of the known assets in the AssetsInfo table.
 	knownAssets utils.AssetMap
+
+	archiveIntermediateSteps bool
 }
 
 const coinMarketCapKey = "CMC_API_KEY"
 
 // NewIndexer creates a new Indexer with the provided config.
-func NewIndexer(cfg config.MarketConfig, logger *zap.Logger, writer provider.Store) (*Indexer, error) {
+func NewIndexer(cfg config.MarketConfig, logger *zap.Logger, writer provider.Store, archiveIntermediateSteps bool) (*Indexer, error) {
 	envCMCKey := os.Getenv(coinMarketCapKey)
 	if envCMCKey != "" {
 		cfg.CoinMarketCapConfig.APIKey = envCMCKey
 	}
 
 	svc := Indexer{
-		logger:        logger.With(zap.String("service", "indexer")),
-		providerStore: writer,
-		cmcIndexer:    coinmarketcap.New(logger, cfg.CoinMarketCapConfig.APIKey),
-		config:        cfg,
-		knownAssets:   make(utils.AssetMap),
+		logger:                   logger.With(zap.String("service", "indexer")),
+		providerStore:            writer,
+		cmcIndexer:               coinmarketcap.New(logger, cfg.CoinMarketCapConfig.APIKey),
+		config:                   cfg,
+		knownAssets:              make(utils.AssetMap),
+		archiveIntermediateSteps: archiveIntermediateSteps,
 	}
 
 	igs := make([]ingesters.Ingester, len(cfg.Ingesters))

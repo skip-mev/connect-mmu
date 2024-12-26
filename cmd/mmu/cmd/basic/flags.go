@@ -58,6 +58,11 @@ const (
 
 // Outputs
 const (
+	// applies to all steps
+	ArchiveIntermediateStepsFlag        = "archive-intermediate-steps"
+	ArchiveIntermediateStepsDefault     = false
+	ArchiveIntermediateStepsDescription = "should archive intermediate steps (e.g. write CMC data to files)"
+
 	// index
 	ProviderDataOutPathFlag        = "provider-data-out"
 	ProviderDataOutPathDefault     = ProviderDataPathDefault

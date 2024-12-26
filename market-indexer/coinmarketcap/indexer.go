@@ -264,8 +264,8 @@ func (i *Indexer) GetProviderMarketsPairs(ctx context.Context, cfg config.Market
 
 			key := ProviderMarketPairKey(
 				names.GetProviderName(name),
-				pair.MarketPairBase.CurrencySymbol,
-				pair.MarketPairQuote.CurrencySymbol,
+				pair.MarketPairBase.ExchangeSymbol,
+				pair.MarketPairQuote.ExchangeSymbol,
 			)
 
 			idInfo := types.CoinMarketCapInfo{
@@ -278,7 +278,7 @@ func (i *Indexer) GetProviderMarketsPairs(ctx context.Context, cfg config.Market
 				PositiveDepthTwo: pair.Quote.USD.DepthPositiveTwo,
 			}
 
-			pmps.Data[key] = ProviderMarketData{
+			newMarketData := ProviderMarketData{
 				BaseAsset:      pair.MarketPairBase.CurrencySymbol,
 				QuoteAsset:     pair.MarketPairQuote.CurrencySymbol,
 				QuoteVolume:    pair.Quote.ExchangeReported.Volume24HQuote,
@@ -287,6 +287,13 @@ func (i *Indexer) GetProviderMarketsPairs(ctx context.Context, cfg config.Market
 				ReferencePrice: pair.Quote.ExchangeReported.Price,
 				LiquidityInfo:  liquidityInfo,
 			}
+
+			if existing, exists := pmps.Data[key]; exists {
+				i.logger.Error("key already exists in pmps.Data", zap.String("key", key), zap.Any("existing", existing), zap.Any("new", newMarketData))
+				continue
+			}
+
+			pmps.Data[key] = newMarketData
 		}
 	}
 

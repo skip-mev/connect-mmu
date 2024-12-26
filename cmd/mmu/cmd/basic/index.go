@@ -37,7 +37,7 @@ func IndexCmd() *cobra.Command {
 
 			providerStore := provider.NewMemoryStore()
 
-			idx, err := indexer.NewIndexer(*cfg.Index, logger, providerStore)
+			idx, err := indexer.NewIndexer(*cfg.Index, logger, providerStore, flags.archiveIntermediateSteps)
 			if err != nil {
 				return err
 			}
@@ -47,6 +47,7 @@ func IndexCmd() *cobra.Command {
 			}
 
 			if flags.providerDataOutPath != "" {
+				logger.Info(fmt.Sprintf("Writing indexed markets to path: %s", flags.providerDataOutPath))
 				if err := providerStore.WriteToPath(ctx, flags.providerDataOutPath); err != nil {
 					return err
 				}
@@ -62,12 +63,13 @@ func IndexCmd() *cobra.Command {
 }
 
 type indexCmdFlags struct {
-	configPath          string
-	providerDataOutPath string
+	configPath               string
+	providerDataOutPath      string
+	archiveIntermediateSteps bool
 }
 
 func indexCmdConfigureFlags(cmd *cobra.Command, flags *indexCmdFlags) {
 	cmd.Flags().StringVar(&flags.configPath, ConfigPathFlag, ConfigPathDefault, ConfigPathDescription)
-
 	cmd.Flags().StringVar(&flags.providerDataOutPath, ProviderDataOutPathFlag, ProviderDataOutPathDefault, ProviderDataOutPathDescription)
+	cmd.Flags().BoolVar(&flags.archiveIntermediateSteps, ArchiveIntermediateStepsFlag, ArchiveIntermediateStepsDefault, ArchiveIntermediateStepsDescription)
 }
