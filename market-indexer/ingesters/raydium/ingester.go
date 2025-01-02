@@ -154,6 +154,7 @@ func (ig *Ingester) GetProviderMarkets(ctx context.Context) ([]provider.CreatePr
 				OffChainTicker:   strings.Join([]string{targetBaseOffchain, targetQuoteOffchain}, types.TickerSeparator),
 				ProviderName:     ProviderName,
 				QuoteVolume:      pair.Volume24HQuote,
+				UsdVolume:        pair.Volume24H,
 				MetadataJSON:     bz,
 				ReferencePrice:   pair.Price,
 				PositiveDepthTwo: pair.Liquidity / 2,
