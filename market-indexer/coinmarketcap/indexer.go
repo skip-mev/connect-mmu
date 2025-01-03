@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/skip-mev/connect-mmu/lib/slices"
+	"github.com/skip-mev/connect-mmu/lib/symbols"
 
 	"go.uber.org/zap"
 
@@ -262,6 +263,14 @@ func (i *Indexer) GetProviderMarketsPairs(ctx context.Context, cfg config.Market
 
 		i.logger.Info("fetched cmc market data", zap.String("exchange", name), zap.Int("num markets", markets.Data.NumMarketPairs))
 		for _, pair := range markets.Data.MarketPairs {
+			cmcBaseSymbol, err := symbols.ToTickerString(pair.MarketPairBase.CurrencySymbol)
+			if err != nil {
+				return ProviderMarketPairs{}, err
+			}
+			cmcQuoteSymbol, err := symbols.ToTickerString(pair.MarketPairQuote.CurrencySymbol)
+			if err != nil {
+				return ProviderMarketPairs{}, err
+			}
 
 			key := ProviderMarketPairKey(
 				names.GetProviderName(name),
@@ -280,8 +289,8 @@ func (i *Indexer) GetProviderMarketsPairs(ctx context.Context, cfg config.Market
 			}
 
 			newMarketData := ProviderMarketData{
-				BaseAsset:      pair.MarketPairBase.CurrencySymbol,
-				QuoteAsset:     pair.MarketPairQuote.CurrencySymbol,
+				BaseAsset:      cmcBaseSymbol,
+				QuoteAsset:     cmcQuoteSymbol,
 				QuoteVolume:    pair.Quote.ExchangeReported.Volume24HQuote,
 				UsdVolume:      pair.Quote.USD.Volume24H,
 				CMCInfo:        idInfo,

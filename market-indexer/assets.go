@@ -248,6 +248,12 @@ func (idx *Indexer) AssociateCoinMarketCap(
 		// add pair data to supplement
 		if found {
 			input = addPairDataToCreateProviderMarket(input, data)
+		} else {
+			idx.logger.Debug("failed to find pair data for CMC info",
+				zap.String("base", input.Create.TargetBase),
+				zap.String("quote", input.Create.TargetQuote),
+				zap.String("provider name", input.Create.ProviderName),
+			)
 		}
 
 		associatedInputs = append(associatedInputs, input)
@@ -260,6 +266,12 @@ func addPairDataToCreateProviderMarket(
 	create provider.CreateProviderMarket,
 	data coinmarketcap.ProviderMarketData,
 ) provider.CreateProviderMarket {
+	// We should be using the CMC's base and quote, which can be different
+	// from the provider's base and quote. For example, for LUNC/USD on CMC,
+	// most providers have LUNC as their base, but kraken has LUNA as their base
+	create.Create.TargetBase = data.BaseAsset
+	create.Create.TargetQuote = data.QuoteAsset
+
 	// use coinmarketcap values if there are no primary source values
 	if create.Create.QuoteVolume == 0 {
 		create.Create.QuoteVolume = data.QuoteVolume
