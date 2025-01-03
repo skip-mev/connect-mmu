@@ -195,6 +195,25 @@ func TestCompare(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "quote rank is not considered in comparison",
+			a: types.Feed{
+				CMCInfo: mmutypes.NewCoinMarketCapInfo(0, 0, 1, 10),
+				LiquidityInfo: mmutypes.LiquidityInfo{
+					NegativeDepthTwo: 10,
+					PositiveDepthTwo: 10,
+				},
+			},
+			b: types.Feed{
+				CMCInfo: mmutypes.NewCoinMarketCapInfo(0, 0, 1, 1),
+				LiquidityInfo: mmutypes.LiquidityInfo{
+					NegativeDepthTwo: 0,
+					PositiveDepthTwo: 0,
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
 			name: "mismatched currency still returns",
 			a: types.Feed{
 				Ticker: mmtypes.Ticker{CurrencyPair: connecttypes.CurrencyPair{

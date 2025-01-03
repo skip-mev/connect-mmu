@@ -142,10 +142,6 @@ func Compare(a, b Feed) bool {
 		return a.CMCInfo.BaseRank > b.CMCInfo.BaseRank
 	}
 
-	if a.CMCInfo.QuoteRank != b.CMCInfo.QuoteRank {
-		return a.CMCInfo.QuoteRank > b.CMCInfo.QuoteRank
-	}
-
 	if a.LiquidityInfo.TotalLiquidity() != b.LiquidityInfo.TotalLiquidity() {
 		return a.LiquidityInfo.TotalLiquidity() < b.LiquidityInfo.TotalLiquidity()
 	}
