@@ -38,6 +38,8 @@ const (
 	flagZScoreBound             = "zscore-bound"
 	flagReferencePriceAllowance = "reference-price-allowance"
 	flagSuccessThreshold        = "success-threshold"
+
+	cmcKeyEnvVar = "CMC_API_KEY"
 )
 
 // NOTE: This command requires you to have both `connect` and `validator` installed.
@@ -71,7 +73,12 @@ func ValidateCmd() *cobra.Command {
 			}
 
 			cmd.Printf("running validation for %d markets\n", len(mm.Markets))
-			if flags.cmcAPIKey != "" {
+
+			cmcAPIKey := flags.cmcAPIKey
+			if cmcAPIKey == "" {
+				cmcAPIKey = os.Getenv(cmcKeyEnvVar)
+			}
+			if cmcAPIKey != "" {
 				cmd.Println("reference price checking enabled")
 			} else {
 				cmd.Println("reference price checking disabled")
@@ -165,7 +172,7 @@ func ValidateCmd() *cobra.Command {
 			}
 
 			// pass info to validator, generate reports.
-			val := validator.New(mm, validator.WithCMCKey(flags.cmcAPIKey))
+			val := validator.New(mm, validator.WithCMCKey(cmcAPIKey))
 			reports, err := val.Report(cmd.Context(), health)
 			if err != nil {
 				return fmt.Errorf("failed to generate report: %w", err)

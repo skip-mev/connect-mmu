@@ -342,7 +342,7 @@
             "currency_pair": { "Base": "USDT", "Quote": "USD" },
             "decimals": 9,
             "min_provider_count": 3,
-            "metadata_JSON": "{\"reference_price\":9994500000,\"liquidity\":16115110,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"3853\"}]}"
+            "metadata_JSON": "{\"reference_price\":9994500000,\"liquidity\":16115110,\"aggregate_ids\":[{\"venue\":\"coinmarketcap\",\"ID\":\"825\"}]}"
           },
           "provider_configs": [
             {
