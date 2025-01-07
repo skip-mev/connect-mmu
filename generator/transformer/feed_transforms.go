@@ -78,6 +78,56 @@ func NormalizeBy() TransformFeed {
 	}
 }
 
+// ResolveCMCConflictsForMarket resolves issues where the feeds for a market may be referring to different
+// base assets.
+//
+// An example conflict is if we have three feeds for GOAT/USD, from binance, kraken, and uniswap base.
+// - GOAT/USD from binance and kraken referring to Goatseus Maximus (CMC ID 33440)
+// - GOAT/USD from uniswap base referring to GOAT on Base (CMC ID 34935)
+//
+// For each market, we sort the feeds and select the base asset's CMC ID of the first sorted feed. This
+// will have the best CMC rank. We then filter out all feeds for this market that do not match this CMC ID.
+func ResolveCMCConflictsForMarket() TransformFeed {
+	return func(_ context.Context, logger *zap.Logger, _ config.GenerateConfig, feeds types.Feeds) (types.Feeds,
+		types.RemovalReasons, error,
+	) {
+		logger.Info("resolving CMC conflicts", zap.Int("feeds", len(feeds)))
+
+		tickerToFeeds := make(map[string]types.Feeds, len(feeds))
+		for _, feed := range feeds {
+			ticker := feed.TickerString()
+			tickerToFeeds[ticker] = append(tickerToFeeds[ticker], feed)
+		}
+
+		out := make([]types.Feed, 0, len(feeds))
+		removals := types.NewRemovalReasons()
+
+		for ticker, feeds := range tickerToFeeds {
+			feeds.Sort()
+			bestCMCId := feeds[0].CMCInfo.BaseID
+			bestCMCRank := feeds[0].CMCInfo.BaseRank
+			for _, feed := range feeds {
+				if feed.CMCInfo.BaseRank < bestCMCRank {
+					panic(fmt.Sprintf("found feed for %s with lower CMC rank than the best one for ticker %s. best CMC rank %d, feed CMC rank %d", feed.ProviderConfig.Name, ticker, bestCMCRank, feed.CMCInfo.BaseRank))
+				}
+				if feed.CMCInfo.BaseID == bestCMCId {
+					out = append(out, feed)
+				} else {
+					removals.AddRemovalReasonFromFeed(feed, feed.ProviderConfig.Name,
+						fmt.Sprintf("Transform ResolveCMCConflictsForMarket: BestCMCID: %d, FeedCMCID: %d, BestCMCRank: %d, FeedCMCRank: %d", bestCMCId,
+							feed.CMCInfo.BaseID, bestCMCRank, feed.CMCInfo.BaseRank))
+					logger.Debug("dropping feed with worse CMC ID", zap.Any("ticker", feed.Ticker.String()), zap.Any("provider", feed.ProviderConfig.Name))
+
+				}
+			}
+		}
+
+		logger.Info("resolved CMC conflicts", zap.Int("remaining feeds", len(out)))
+
+		return out, nil, nil
+	}
+}
+
 // ResolveConflictsForProvider resolves all conflicts between feeds.  Conflicts arise when the feeds have overlapping CurrencyPairs.
 //
 // An example conflict could arise if we desire markets quoted in USD and have two feeds:
@@ -85,7 +135,7 @@ func NormalizeBy() TransformFeed {
 // - BTC/USD from kraken using the btc/usdt ticker adjusted by BTC/USD
 //
 // This conflict would have been created in the NormalizeBy transform, and we must choose one of the feeds for this
-// given provider.  We choose based on comparing Liquidity and 24HR Volume for each feed.
+// given provider. We choose based on comparing the Liquidity and 24HR Volume for each feed.
 func ResolveConflictsForProvider() TransformFeed {
 	return func(_ context.Context, logger *zap.Logger, _ config.GenerateConfig, feeds types.Feeds) (types.Feeds,
 		types.RemovalReasons, error,
@@ -106,6 +156,8 @@ func ResolveConflictsForProvider() TransformFeed {
 			if replace {
 				logger.Debug("replacing on conflict", zap.Any("old", got), zap.Any("new", feed))
 				cpToProvider[key] = feed
+			} else {
+				logger.Debug("conflict found but not replacing", zap.Any("old", got), zap.Any("new", feed))
 			}
 		}
 
@@ -408,7 +460,7 @@ func getHighestRankFeedGroup(feedGroups map[string]types.Feeds) (string, error) 
 }
 
 // TopFeedsForProvider chooses only the top N feeds for a provider if it has a filter set.
-// The feeds are sorted by 24hr Quote Volume and then the top N are chosen.
+// The feeds are sorted by the base asset's CMC rank and then the top N are chosen.
 // If no filter is set, the feeds are sorted, but no feeds will be removed.
 func TopFeedsForProvider() TransformFeed {
 	return func(_ context.Context, logger *zap.Logger, cfg config.GenerateConfig, feeds types.Feeds,
@@ -435,8 +487,8 @@ func TopFeedsForProvider() TransformFeed {
 
 			logger.Info("filtering top markets per provider", zap.String("provider", provider), zap.Int("feeds", len(feedsForProvider)))
 
-			// sort the feeds based on quote volume, then take the top N
-			// this will sort the feeds where feeds[0] has the highest quote volume
+			// sort the feeds based on CMC rank, then take the top N
+			// this will sort the feeds where feeds[0] has the best CMC rank
 			feedsForProvider.Sort()
 
 			// after sorting, only take top N

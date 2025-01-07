@@ -276,18 +276,18 @@ func TestFeeds_Sort(t *testing.T) {
 			name: "sort based on volume",
 			f: types.Feeds{
 				{
-					DailyQuoteVolume: big.NewFloat(10000),
+					DailyUsdVolume: big.NewFloat(10000),
 				},
 				{
-					DailyQuoteVolume: big.NewFloat(1000000),
+					DailyUsdVolume: big.NewFloat(1000000),
 				},
 			},
 			want: types.Feeds{
 				{
-					DailyQuoteVolume: big.NewFloat(1000000),
+					DailyUsdVolume: big.NewFloat(1000000),
 				},
 				{
-					DailyQuoteVolume: big.NewFloat(10000),
+					DailyUsdVolume: big.NewFloat(10000),
 				},
 			},
 		},

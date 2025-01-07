@@ -1,84 +1,61 @@
 {
   "providers": {
     "binance_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "bitfinex_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "bitstamp_api": {
-      "filters": {
-        "top_markets": 100
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "bybit_ws": {
-      "filters": {
-        "top_markets": 100
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "coinbase_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "crypto_dot_com_ws":{
-      "filters": {
-        "top_markets": 100
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "gate_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "huobi_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "kraken_api": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "kucoin_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "okx_ws": {
-      "filters": {
-        "top_markets": 100
-      }
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 10000
     },
     "raydium_api": {
-      "filters": {
-        "top_markets": 50
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 5000000
     },
     "uniswapv3_api-ethereum": {
-      "filters": {
-        "top_markets": 50
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 5000000
     },
     "uniswapv3_api-base": {
-      "filters": {
-        "top_markets": 50
-      },
-      "ignore_liquidity": true
+      "min_provider_volume": 100000,
+      "min_provider_liquidity": 5000000
     }
-  },
-  "disable_providers": {
-    "WELL/USD": ["bybit_ws"]
   },
   "quotes": {
     "USD": {

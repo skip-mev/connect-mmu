@@ -34,6 +34,7 @@ func New(logger *zap.Logger) Transformer {
 			ResolveNamingAliases(),
 			NormalizeBy(),
 			DropFeedsWithoutAggregatorIDs(),
+			ResolveCMCConflictsForMarket(),
 			ResolveConflictsForProvider(),
 			TopFeedsForProvider(),
 		},

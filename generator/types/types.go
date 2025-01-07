@@ -149,7 +149,7 @@ func Compare(a, b Feed) bool {
 		return a.LiquidityInfo.TotalLiquidity() < b.LiquidityInfo.TotalLiquidity()
 	}
 
-	cmp := a.DailyQuoteVolume.Cmp(b.DailyQuoteVolume)
+	cmp := a.DailyUsdVolume.Cmp(b.DailyUsdVolume)
 	return cmp < 0
 }
 
