@@ -41,10 +41,10 @@ type generateUpsertsFlags struct {
 	existingOnly             bool
 	disableDeFiMarketMerging bool
 
-	generatedMarketMapOutPath         string
-	generatedMarketMapRemovalsOutPath string
-	overrideMarketMapOutPath          string
-	upsertsOutPath                    string
+	generatedMarketMapOutPath string
+	marketExclusionsOutPath   string
+	overrideMarketMapOutPath  string
+	upsertsOutPath            string
 
 	writeIntermediate      bool
 	warnOnInvalidMarketMap bool
@@ -60,7 +60,7 @@ func generateUpsertsConfigureFlags(cmd *cobra.Command, flags *generateUpsertsFla
 	cmd.Flags().BoolVar(&flags.disableDeFiMarketMerging, basic.DisableDeFiMarketMerging, basic.DisableDeFiMarketMergingDefault, basic.DisableDeFiMarketMergingDescription)
 
 	cmd.Flags().StringVar(&flags.generatedMarketMapOutPath, basic.MarketMapOutPathGeneratedFlag, basic.MarketMapOutPathGeneratedDefault, basic.MarketMapOutPathGenderatedDescription)
-	cmd.Flags().StringVar(&flags.generatedMarketMapRemovalsOutPath, basic.MarketMapRemovalsOutPathFlag, basic.MarketMapRemovalsOutPathDefault, basic.MarketMapRemovalsOutPathDescription)
+	cmd.Flags().StringVar(&flags.marketExclusionsOutPath, basic.MarketMapExclusionsOutPathFlag, basic.MarketMapExclusionsOutPathDefault, basic.MarketMapExclusionsOutPathDescription)
 	cmd.Flags().StringVar(&flags.overrideMarketMapOutPath, basic.MarketMapOutPathOverrideFlag, basic.MarketMapOutPathOverrideDefault, basic.MarketMapOutPathOverrideDescription)
 	cmd.Flags().StringVar(&flags.upsertsOutPath, basic.UpsertsOutPathFlag, basic.UpsertsOutPathDefault, basic.UpsertsOutPathDescription)
 
@@ -83,7 +83,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 		return errors.New("generate configuration missing from mmu config")
 	}
 
-	generated, removalReasons, err := basic.GenerateFromConfig(ctx, logger, *cfg.Generate, flags.providerDataPath)
+	generated, exclusionReasons, err := basic.GenerateFromConfig(ctx, logger, *cfg.Generate, flags.providerDataPath)
 	if err != nil {
 		logger.Error("failed to generate marketmap", zap.Error(err))
 		return err
@@ -95,9 +95,9 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 			return fmt.Errorf("failed to write generated market map: %w", err)
 		}
 
-		logger.Info("writing removal reasons", zap.String("file", flags.generatedMarketMapRemovalsOutPath))
-		if err := diffs.WriteRemovalReasonsToFile(flags.generatedMarketMapRemovalsOutPath, removalReasons); err != nil {
-			return fmt.Errorf("failed to write removals to file: %w", err)
+		logger.Info("writing exclusion reasons", zap.String("file", flags.marketExclusionsOutPath))
+		if err := diffs.WriteExclusionReasonsToFile(flags.marketExclusionsOutPath, exclusionReasons); err != nil {
+			return fmt.Errorf("failed to write exclusion reasons to file: %w", err)
 		}
 	}
 

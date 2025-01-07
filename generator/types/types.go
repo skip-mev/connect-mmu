@@ -12,48 +12,48 @@ import (
 	"github.com/skip-mev/connect-mmu/types"
 )
 
-// RemovalReasons contains identifying information around a removed Ticker and the reasons for its removal.
+// ExclusionReasons contains identifying information around a excluded Ticker and the reasons for its exclusion.
 // Used for debugging why a market is not considered valid/supported by the MMU.
-type RemovalReasons map[string][]RemovalReason
+type ExclusionReasons map[string][]ExclusionReason
 
-// NewRemovalReasons creates a new RemovalReasons map.
-func NewRemovalReasons() RemovalReasons {
-	return make(RemovalReasons)
+// NewExclusionReasons creates a new ExclusionReasons map.
+func NewExclusionReasons() ExclusionReasons {
+	return make(ExclusionReasons)
 }
 
-// AddRemovalReasonFromFeed adds a reason for a provider to remove a Feed.
-func (r RemovalReasons) AddRemovalReasonFromFeed(feed Feed, provider string, reason string) {
+// AddExclusionReasonFromFeed adds a reason for a provider to exclude a Feed.
+func (r ExclusionReasons) AddExclusionReasonFromFeed(feed Feed, provider string, reason string) {
 	if _, found := r[feed.Ticker.String()]; !found {
-		r[feed.Ticker.String()] = []RemovalReason{}
+		r[feed.Ticker.String()] = []ExclusionReason{}
 	}
-	r[feed.Ticker.String()] = append(r[feed.Ticker.String()], RemovalReason{
+	r[feed.Ticker.String()] = append(r[feed.Ticker.String()], ExclusionReason{
 		Provider: provider,
 		Reason:   reason,
 		Feed:     feed,
 	})
 }
 
-// AddRemovalReasonFromMarket adds a reason for a provider to remove a Market.
-func (r RemovalReasons) AddRemovalReasonFromMarket(market mmtypes.Market, provider string, reason string) {
+// AddExclusionReasonFromMarket adds a reason for a provider to exclude a Market.
+func (r ExclusionReasons) AddExclusionReasonFromMarket(market mmtypes.Market, provider string, reason string) {
 	if _, found := r[market.Ticker.String()]; !found {
-		r[market.Ticker.String()] = []RemovalReason{}
+		r[market.Ticker.String()] = []ExclusionReason{}
 	}
-	r[market.Ticker.String()] = append(r[market.Ticker.String()], RemovalReason{
+	r[market.Ticker.String()] = append(r[market.Ticker.String()], ExclusionReason{
 		Provider: provider,
 		Reason:   reason,
 		Market:   market,
 	})
 }
 
-// Merge merges two RemovalReasons maps.
-func (r RemovalReasons) Merge(other RemovalReasons) {
+// Merge merges two ExclusionReasons maps.
+func (r ExclusionReasons) Merge(other ExclusionReasons) {
 	for ticker, reasons := range other {
 		r[ticker] = append(r[ticker], reasons...)
 	}
 }
 
-// RemovalReason is a struct containing the reason for a (provider, market) / market removal.
-type RemovalReason struct {
+// ExclusionReason is a struct containing the reason for a (provider, market) / market exclusion.
+type ExclusionReason struct {
 	Reason   string         `json:"reason"`
 	Provider string         `json:"provider"`
 	Market   mmtypes.Market `json:"market,omitempty"`
@@ -210,7 +210,7 @@ func (f Feeds) ToProviderFeeds() ProviderFeeds {
 
 // ToMarketMap translates the set of feeds to a valid MarketMap by:
 // - converting Feed objects to Markets or appending them to existing markets.
-// - removing markets that have providers below MinProviderCount.
+// - excluding markets that have providers below MinProviderCount.
 // Returns an error if the resulting marketmap is invalid.
 func (f Feeds) ToMarketMap() (mmtypes.MarketMap, error) {
 	// calculate total liquidity per market

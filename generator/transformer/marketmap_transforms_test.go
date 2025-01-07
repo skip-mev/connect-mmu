@@ -501,7 +501,7 @@ func TestPruneInsufficientlyProvidedMarkets(t *testing.T) {
 	}
 }
 
-func TestRemoveDisabledProviders(t *testing.T) {
+func TestExcludeDisabledProviders(t *testing.T) {
 	tests := []struct {
 		name     string
 		markets  map[string][]string
@@ -580,7 +580,7 @@ func TestRemoveDisabledProviders(t *testing.T) {
 				mm.Markets[ticker] = market
 			}
 
-			transform := transformer.RemoveDisabledProviders()
+			transform := transformer.ExcludeDisabledProviders()
 			result, _, err := transform(ctx, logger, cfg, mm)
 			require.NoError(t, err)
 

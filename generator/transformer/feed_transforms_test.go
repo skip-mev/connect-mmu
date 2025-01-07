@@ -772,7 +772,7 @@ func TestPruneByQuoteVolume(t *testing.T) {
 			expectErr:   false,
 		},
 		{
-			name: "valid remove a market with no associated quote config, keep others",
+			name: "valid exclude a market with no associated quote config, keep others",
 			cfg: config.GenerateConfig{
 				Providers: map[string]config.ProviderConfig{
 					krakenProvider: {
@@ -894,7 +894,7 @@ func TestPruneByLiquidity(t *testing.T) {
 			expectErr:   false,
 		},
 		{
-			name: "valid remove a market with no associated quote config, keep others",
+			name: "valid exclude a market with no associated quote config, keep others",
 			cfg: config.GenerateConfig{
 				Providers: map[string]config.ProviderConfig{
 					krakenProvider: {
@@ -1013,12 +1013,12 @@ func TestTopMarketsForProvider(t *testing.T) {
 	}
 
 	tests := []struct {
-		name         string
-		feeds        types.Feeds
-		cfg          config.GenerateConfig
-		want         types.Feeds
-		wantRemovals types.RemovalReasons
-		wantErr      bool
+		name           string
+		feeds          types.Feeds
+		cfg            config.GenerateConfig
+		want           types.Feeds
+		wantExclusions types.ExclusionReasons
+		wantErr        bool
 	}{
 		{
 			name: "return nothing for no invalid provider configs",
@@ -1037,18 +1037,18 @@ func TestTopMarketsForProvider(t *testing.T) {
 					ReferencePrice: big.NewFloat(100),
 				},
 			},
-			cfg:          cfg,
-			want:         nil,
-			wantRemovals: types.RemovalReasons{},
-			wantErr:      true,
+			cfg:            cfg,
+			want:           nil,
+			wantExclusions: types.ExclusionReasons{},
+			wantErr:        true,
 		},
 		{
-			name:         "do nothing for no provider feeds",
-			feeds:        nil,
-			cfg:          cfg,
-			want:         nil,
-			wantRemovals: types.RemovalReasons{},
-			wantErr:      false,
+			name:           "do nothing for no provider feeds",
+			feeds:          nil,
+			cfg:            cfg,
+			want:           nil,
+			wantExclusions: types.ExclusionReasons{},
+			wantErr:        false,
 		},
 		{
 			name: "retain all markets for a provider with no filter - should sort",
@@ -1086,11 +1086,11 @@ func TestTopMarketsForProvider(t *testing.T) {
 					CMCInfo:        cmcInfoA,
 				},
 			},
-			wantRemovals: types.RemovalReasons{},
-			wantErr:      false,
+			wantExclusions: types.ExclusionReasons{},
+			wantErr:        false,
 		},
 		{
-			name: "remove market with lower quote volume for provider with filter - will order feeds",
+			name: "exclude market with lower quote volume for provider with filter - will order feeds",
 			feeds: types.Feeds{
 				{
 					Ticker:         marketBtcUsdt.Ticker,
@@ -1151,7 +1151,7 @@ func TestTopMarketsForProvider(t *testing.T) {
 					},
 				},
 			},
-			wantRemovals: types.RemovalReasons{"BTC/USD": []types.RemovalReason{{
+			wantExclusions: types.ExclusionReasons{"BTC/USD": []types.ExclusionReason{{
 				Reason:   "only selecting top 2 feeds for this provider",
 				Provider: krakenProvider,
 				Feed: types.Feed{
@@ -1173,7 +1173,7 @@ func TestTopMarketsForProvider(t *testing.T) {
 		transform := transformer.TopFeedsForProvider()
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, removals, err := transform(context.Background(), zap.NewNop(), tt.cfg, tt.feeds)
+			got, exclusions, err := transform(context.Background(), zap.NewNop(), tt.cfg, tt.feeds)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -1181,7 +1181,7 @@ func TestTopMarketsForProvider(t *testing.T) {
 
 			require.NoError(t, err)
 			require.True(t, tt.want.Equal(got))
-			require.Equal(t, tt.wantRemovals, removals)
+			require.Equal(t, tt.wantExclusions, exclusions)
 		})
 	}
 }

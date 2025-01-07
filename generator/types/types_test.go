@@ -103,23 +103,23 @@ func TestCompareFeed(t *testing.T) {
 	}
 }
 
-func TestRemovalReasons(t *testing.T) {
-	t.Run("test adding removal reason", func(t *testing.T) {
-		reasons := types.NewRemovalReasons()
+func TestExclusionReasons(t *testing.T) {
+	t.Run("test adding exclusion reason", func(t *testing.T) {
+		reasons := types.NewExclusionReasons()
 		btc := mmtypes.Ticker{
 			CurrencyPair: connecttypes.NewCurrencyPair("BTC", "USD"),
 		}
 
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
 
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
 
 		// check that btc has 2 reasons
 		require.Equal(t, 2, len(reasons[btc.String()]))
 	})
 
-	t.Run("test adding removal reason with different ticker", func(t *testing.T) {
-		reasons := types.NewRemovalReasons()
+	t.Run("test adding exclusion reason with different ticker", func(t *testing.T) {
+		reasons := types.NewExclusionReasons()
 		btc := mmtypes.Ticker{
 			CurrencyPair: connecttypes.NewCurrencyPair("BTC", "USD"),
 		}
@@ -128,8 +128,8 @@ func TestRemovalReasons(t *testing.T) {
 			CurrencyPair: connecttypes.NewCurrencyPair("ETH", "USD"),
 		}
 
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: eth}, "test", "test")
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: eth}, "test", "test")
 
 		// check that btc has 1 reason
 		require.Equal(t, 1, len(reasons[btc.String()]))
@@ -137,8 +137,8 @@ func TestRemovalReasons(t *testing.T) {
 		require.Equal(t, 1, len(reasons[eth.String()]))
 	})
 
-	t.Run("test merging removal reasons", func(t *testing.T) {
-		reasons := types.NewRemovalReasons()
+	t.Run("test merging exclusion reasons", func(t *testing.T) {
+		reasons := types.NewExclusionReasons()
 		btc := mmtypes.Ticker{
 			CurrencyPair: connecttypes.NewCurrencyPair("BTC", "USD"),
 		}
@@ -147,13 +147,13 @@ func TestRemovalReasons(t *testing.T) {
 			CurrencyPair: connecttypes.NewCurrencyPair("ETH", "USD"),
 		}
 
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: btc}, "test", "test")
 
 		// check that btc has 1 reason
 		require.Equal(t, 1, len(reasons[btc.String()]))
 
-		reasons2 := types.NewRemovalReasons()
-		reasons.AddRemovalReasonFromFeed(types.Feed{Ticker: eth}, "test", "test")
+		reasons2 := types.NewExclusionReasons()
+		reasons.AddExclusionReasonFromFeed(types.Feed{Ticker: eth}, "test", "test")
 
 		reasons.Merge(reasons2)
 
@@ -402,18 +402,18 @@ func TestProviderFeeds_ToFeeds(t *testing.T) {
 	}
 }
 
-func TestRemovalReasons_Merge(t *testing.T) {
+func TestExclusionReasons_Merge(t *testing.T) {
 	tests := []struct {
 		name  string
-		r     types.RemovalReasons
-		other types.RemovalReasons
-		want  types.RemovalReasons
+		r     types.ExclusionReasons
+		other types.ExclusionReasons
+		want  types.ExclusionReasons
 	}{
 		{
-			name:  "empty removal reasons",
-			r:     types.RemovalReasons{},
-			other: types.RemovalReasons{},
-			want:  types.RemovalReasons{},
+			name:  "empty exclusion reasons",
+			r:     types.ExclusionReasons{},
+			other: types.ExclusionReasons{},
+			want:  types.ExclusionReasons{},
 		},
 	}
 	for _, tt := range tests {

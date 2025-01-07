@@ -25,7 +25,7 @@ func GenerateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Short:   "generate market map from market providers",
-		Example: "mmu generate --config config.json --provider-data provider-data.json --generated-market-map-out market-map.json --generated-market-map-removals-out market-map-removals.json",
+		Example: "mmu generate --config config.json --provider-data provider-data.json --generated-market-map-out market-map.json --generated-market-map-exclusions-out market-map-exclusions.json",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
@@ -44,7 +44,7 @@ func GenerateCmd() *cobra.Command {
 
 			logger.Info("successfully read config", zap.String("path", flags.configPath))
 
-			mm, removalReasons, err := GenerateFromConfig(ctx, logger, *cfg.Generate, flags.providerDataPath)
+			mm, exclusionReasons, err := GenerateFromConfig(ctx, logger, *cfg.Generate, flags.providerDataPath)
 			if err != nil {
 				logger.Error("failed to generate marketmap", zap.Error(err))
 				return err
@@ -57,11 +57,11 @@ func GenerateCmd() *cobra.Command {
 				}
 			}
 
-			if flags.marketMapRemovalsOutPath != "" {
-				logger.Info("writing removal reasons", zap.String("file", flags.marketMapRemovalsOutPath))
+			if flags.marketMapExclusionsOutPath != "" {
+				logger.Info("writing exclusion reasons", zap.String("file", flags.marketMapExclusionsOutPath))
 				// TODO(zrbecker): this file name should be set by a flag.
-				if err := diffs.WriteRemovalReasonsToFile(flags.marketMapRemovalsOutPath, removalReasons); err != nil {
-					return fmt.Errorf("failed to write removals to file: %w", err)
+				if err := diffs.WriteExclusionReasonsToFile(flags.marketMapExclusionsOutPath, exclusionReasons); err != nil {
+					return fmt.Errorf("failed to write exclusions to file: %w", err)
 				}
 			}
 
@@ -75,10 +75,10 @@ func GenerateCmd() *cobra.Command {
 }
 
 type generateCmdFlags struct {
-	configPath               string
-	providerDataPath         string
-	marketMapOutPath         string
-	marketMapRemovalsOutPath string
+	configPath                 string
+	providerDataPath           string
+	marketMapOutPath           string
+	marketMapExclusionsOutPath string
 }
 
 func generateCmdConfigureFlags(cmd *cobra.Command, flags *generateCmdFlags) {
@@ -86,7 +86,7 @@ func generateCmdConfigureFlags(cmd *cobra.Command, flags *generateCmdFlags) {
 	cmd.Flags().StringVar(&flags.providerDataPath, ProviderDataPathFlag, ProviderDataPathDefault, ProviderDataPathDescription)
 
 	cmd.Flags().StringVar(&flags.marketMapOutPath, MarketMapOutPathGeneratedFlag, MarketMapOutPathGeneratedDefault, MarketMapOutPathGenderatedDescription)
-	cmd.Flags().StringVar(&flags.marketMapRemovalsOutPath, MarketMapRemovalsOutPathFlag, MarketMapRemovalsOutPathDefault, MarketMapRemovalsOutPathDescription)
+	cmd.Flags().StringVar(&flags.marketMapExclusionsOutPath, MarketMapExclusionsOutPathFlag, MarketMapExclusionsOutPathDefault, MarketMapExclusionsOutPathDescription)
 }
 
 func GenerateFromConfig(
@@ -94,17 +94,17 @@ func GenerateFromConfig(
 	logger *zap.Logger,
 	cfg config.GenerateConfig,
 	providerPath string,
-) (mmtypes.MarketMap, types.RemovalReasons, error) {
+) (mmtypes.MarketMap, types.ExclusionReasons, error) {
 	providerStore, err := provider.NewMemoryStoreFromFile(providerPath)
 	if err != nil {
 		return mmtypes.MarketMap{}, nil, err
 	}
 
 	g := generator.New(logger, providerStore)
-	mm, removalReasons, err := g.GenerateMarketMap(ctx, cfg)
+	mm, exclusionReasons, err := g.GenerateMarketMap(ctx, cfg)
 	if err != nil {
 		return mmtypes.MarketMap{}, nil, err
 	}
 
-	return mm, removalReasons, nil
+	return mm, exclusionReasons, nil
 }

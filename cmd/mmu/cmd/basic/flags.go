@@ -73,9 +73,9 @@ const (
 	MarketMapOutPathGeneratedDefault      = MarketMapGeneratedDefault
 	MarketMapOutPathGenderatedDescription = "path to output generated market map"
 
-	MarketMapRemovalsOutPathFlag        = "generated-market-map-removals-out"
-	MarketMapRemovalsOutPathDefault     = "./tmp/generated-market-map-removals.json"
-	MarketMapRemovalsOutPathDescription = "path to output markets removed from market map"
+	MarketMapExclusionsOutPathFlag        = "generated-market-map-exclusions-out"
+	MarketMapExclusionsOutPathDefault     = "./tmp/generated-market-map-exclusions.json"
+	MarketMapExclusionsOutPathDescription = "path to output markets excluded from market map"
 
 	// override
 	MarketMapOutPathOverrideFlag        = "override-market-map-out"

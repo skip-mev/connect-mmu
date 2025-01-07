@@ -31,7 +31,7 @@ func New(logger *zap.Logger, providerStore provider.Store) Generator {
 func (g *Generator) GenerateMarketMap(
 	ctx context.Context,
 	cfg config.GenerateConfig,
-) (mmtypes.MarketMap, types.RemovalReasons, error) {
+) (mmtypes.MarketMap, types.ExclusionReasons, error) {
 	feeds, err := g.q.Feeds(ctx, cfg)
 	if err != nil {
 		g.logger.Error("Unable to query", zap.Error(err))

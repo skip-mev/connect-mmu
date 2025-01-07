@@ -10,10 +10,10 @@ import (
 	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
-func WriteRemovalReasonsToFile(filePath string, removalReasons types.RemovalReasons) error {
-	bz, err := json.MarshalIndent(removalReasons, "", "  ")
+func WriteExclusionReasonsToFile(filePath string, exclusionReasons types.ExclusionReasons) error {
+	bz, err := json.MarshalIndent(exclusionReasons, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal removal reasons: %w", err)
+		return fmt.Errorf("failed to marshal exclusion reasons: %w", err)
 	}
 
 	return file.WriteBytesToFile(filePath, bz)

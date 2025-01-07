@@ -40,7 +40,7 @@ func New(logger *zap.Logger) Transformer {
 		},
 		mmTransforms: []TransformMarketMap{
 			PruneMarkets(),
-			RemoveDisabledProviders(),
+			ExcludeDisabledProviders(),
 			EnableMarkets(),
 			ProcessDefiMarkets(),
 			PruneInsufficientlyProvidedMarkets(),
@@ -52,8 +52,8 @@ func New(logger *zap.Logger) Transformer {
 }
 
 // TransformFeeds runs all feed transformers that are assigned to the Transformer.
-func (d *Transformer) TransformFeeds(ctx context.Context, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds, types.RemovalReasons, error) {
-	dropped := types.NewRemovalReasons()
+func (d *Transformer) TransformFeeds(ctx context.Context, cfg config.GenerateConfig, feeds types.Feeds) (types.Feeds, types.ExclusionReasons, error) {
+	dropped := types.NewExclusionReasons()
 
 	for _, t := range d.feedTransforms {
 		transformFeeds, transformDrops, err := t(ctx, d.logger, cfg, feeds)
@@ -68,12 +68,12 @@ func (d *Transformer) TransformFeeds(ctx context.Context, cfg config.GenerateCon
 }
 
 // TransformMarketMap runs all market map transformers that are assigned to the Transformer.
-func (d *Transformer) TransformMarketMap(ctx context.Context, cfg config.GenerateConfig, marketMap mmtypes.MarketMap) (mmtypes.MarketMap, types.RemovalReasons, error) {
+func (d *Transformer) TransformMarketMap(ctx context.Context, cfg config.GenerateConfig, marketMap mmtypes.MarketMap) (mmtypes.MarketMap, types.ExclusionReasons, error) {
 	if marketMap.Markets == nil {
 		return mmtypes.MarketMap{}, nil, fmt.Errorf("markets cannot be nil")
 	}
 
-	dropped := types.NewRemovalReasons()
+	dropped := types.NewExclusionReasons()
 	for _, t := range d.mmTransforms {
 		transformMM, transformDrops, err := t(ctx, d.logger, cfg, marketMap)
 		if err != nil {
