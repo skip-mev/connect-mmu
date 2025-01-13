@@ -20,7 +20,7 @@ func CombineMarketMaps(
 	logger *zap.Logger,
 	actual, generated mmtypes.MarketMap,
 	options Options,
-) (mmtypes.MarketMap, error) {
+) (mmtypes.MarketMap, []string, error) {
 	// allow for the input of fully empty market maps.  It is a valid case if the on-chain or generated market map is empty.
 	if actual.Markets == nil {
 		actual.Markets = make(map[string]mmtypes.Market)
@@ -83,17 +83,25 @@ func CombineMarketMaps(
 		combined.Markets[ticker] = market
 	}
 
-	// append add markets that are in actual, but NOT generated
+	// append remove markets that are in generated, but NOT actual, unless it is enabled
+	removals := make([]string, 0)
 	for ticker, market := range actual.Markets {
 		if _, found := generated.Markets[ticker]; !found {
-			logger.Debug("adding actual market that is not in the generated market map",
-				zap.String("ticker", ticker),
-			)
-			combined.Markets[ticker] = market
+			if market.Ticker.Enabled {
+				logger.Warn("Adding actual market that is not in the generated market map because it is enabled",
+					zap.String("ticker", ticker),
+				)
+				combined.Markets[ticker] = market
+			} else {
+				removals = append(removals, ticker)
+				logger.Debug("removing actual market that is not in the generated market map",
+					zap.String("ticker", ticker),
+				)
+			}
 		}
 	}
 
-	return combined, nil
+	return combined, removals, nil
 }
 
 func appendToProviders(actual, generated mmtypes.Market) []mmtypes.ProviderConfig {

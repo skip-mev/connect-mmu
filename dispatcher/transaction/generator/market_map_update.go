@@ -8,8 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
-	slinkymmtypes "github.com/skip-mev/slinky/x/marketmap/types"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -88,22 +86,12 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 	ctx context.Context,
 	msgs []sdk.Msg,
 ) ([]cmttypes.Tx, error) {
-	// get the account
-	acc, err := s.coreGenerator.signingAgent.GetSigningAccount(ctx)
+	baseAcc, err := s.baseAccount(ctx)
 	if err != nil {
-		s.logger.Error("failed to get signing account", zap.Error(err))
 		return nil, err
 	}
 
-	// convert to a base account
-	baseAcc, ok := acc.(*authtypes.BaseAccount)
-	if !ok {
-		return nil, fmt.Errorf("expected BaseAccount but got %T", acc)
-	}
-
 	s.logger.Info("account used to submit txs", zap.Any("account", baseAcc))
-	address := baseAcc.Address
-	s.logger.Info("derived signing address", zap.String("address", address))
 
 	txs := make([]cmttypes.Tx, 0)
 	simSequence := baseAcc.GetSequence()
@@ -111,33 +99,7 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 	for _, msg := range msgs {
 		accSequence := baseAcc.GetSequence()
 
-		var upsertMsg sdk.Msg
-		switch s.chainConfig.Version {
-		case config.VersionConnect:
-			upsert, ok := msg.(*mmtypes.MsgUpsertMarkets)
-			if !ok {
-				s.logger.Error("failed to cast sdk.Msg to expected type connect.MsgUpsertMarkets", zap.Any("msg", msg))
-				return nil, fmt.Errorf("failed to cast sdk.Msg to expected type connect.MsgUpsertMarkets")
-			}
-			// ensure that the message authority is the signer key bech32 address for the chain
-			upsert.Authority = address
-
-			upsertMsg = upsert
-		case config.VersionSlinky:
-			upsert, ok := msg.(*slinkymmtypes.MsgUpsertMarkets)
-			if !ok {
-				s.logger.Error("failed to cast sdk.Msg to expected type slinky.MsgUpsertMarkets", zap.Any("msg", msg))
-				return nil, fmt.Errorf("failed to cast sdk.Msg to expected type slinky.MsgUpsertMarkets")
-			}
-			// ensure that the message authority is the signer key bech32 address for the chain
-			upsert.Authority = address
-
-			upsertMsg = upsert
-		default:
-			return nil, fmt.Errorf("unsupported version: %s", s.chainConfig.Version)
-		}
-
-		txb, err := s.estimateUnsignedTx(upsertMsg, accSequence, simSequence)
+		txb, err := s.estimateUnsignedTx(msg, accSequence, simSequence)
 		if err != nil {
 			s.logger.Error("failed to estimate tx", zap.Error(err))
 			return nil, err
@@ -160,4 +122,18 @@ func (s *SigningTransactionGenerator) GenerateTransactions(
 
 	s.logger.Info("generated txs", zap.Int("num tx", len(txs)))
 	return txs, nil
+}
+
+func (s *SigningTransactionGenerator) baseAccount(ctx context.Context) (*authtypes.BaseAccount, error) {
+	acc, err := s.coreGenerator.signingAgent.GetSigningAccount(ctx)
+	if err != nil {
+		s.logger.Error("failed to get signing account", zap.Error(err))
+		return nil, err
+	}
+
+	baseAcc, ok := acc.(*authtypes.BaseAccount)
+	if !ok {
+		return nil, fmt.Errorf("expected BaseAccount but got %T", acc)
+	}
+	return baseAcc, nil
 }

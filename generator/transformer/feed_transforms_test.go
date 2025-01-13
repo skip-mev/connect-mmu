@@ -1542,7 +1542,7 @@ func TestResolveCMCConflictsForMarket(t *testing.T) {
 			transform := transformer.ResolveCMCConflictsForMarket()
 			result, _, err := transform(context.Background(), zaptest.NewLogger(t), config.GenerateConfig{}, tc.feeds)
 			require.NoError(t, err)
-			require.Equal(t, tc.expectedFeeds, result)
+			require.ElementsMatch(t, tc.expectedFeeds, result)
 		})
 	}
 }

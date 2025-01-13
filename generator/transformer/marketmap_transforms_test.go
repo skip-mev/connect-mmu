@@ -509,7 +509,7 @@ func TestExcludeDisabledProviders(t *testing.T) {
 		expected map[string][]string
 	}{
 		{
-			name: "remove disabled providers",
+			name: "exclude disabled providers",
 			markets: map[string][]string{
 				"ETH/USD": {"foo", "bar", "baz"},
 			},

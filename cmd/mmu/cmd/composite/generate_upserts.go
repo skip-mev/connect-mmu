@@ -44,6 +44,7 @@ type generateUpsertsFlags struct {
 	generatedMarketMapOutPath string
 	marketExclusionsOutPath   string
 	overrideMarketMapOutPath  string
+	marketMapRemovalsOutPath  string
 	upsertsOutPath            string
 
 	writeIntermediate      bool
@@ -62,6 +63,7 @@ func generateUpsertsConfigureFlags(cmd *cobra.Command, flags *generateUpsertsFla
 	cmd.Flags().StringVar(&flags.generatedMarketMapOutPath, basic.MarketMapOutPathGeneratedFlag, basic.MarketMapOutPathGeneratedDefault, basic.MarketMapOutPathGenderatedDescription)
 	cmd.Flags().StringVar(&flags.marketExclusionsOutPath, basic.MarketMapExclusionsOutPathFlag, basic.MarketMapExclusionsOutPathDefault, basic.MarketMapExclusionsOutPathDescription)
 	cmd.Flags().StringVar(&flags.overrideMarketMapOutPath, basic.MarketMapOutPathOverrideFlag, basic.MarketMapOutPathOverrideDefault, basic.MarketMapOutPathOverrideDescription)
+	cmd.Flags().StringVar(&flags.marketMapRemovalsOutPath, basic.MarketMapRemovalsOutPathFlag, basic.MarketMapRemovalsOutPathDefault, basic.MarketMapRemovalsOutPathDescription)
 	cmd.Flags().StringVar(&flags.upsertsOutPath, basic.UpsertsOutPathFlag, basic.UpsertsOutPathDefault, basic.UpsertsOutPathDescription)
 
 	cmd.Flags().BoolVar(&flags.writeIntermediate, WriteIntermediateFlag, WriteIntermediateDefault, WriteIntermediateDescription)
@@ -106,7 +108,7 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 		return errors.New("chain configuration missing from mmu config")
 	}
 
-	overriddenMarketMap, err := basic.OverrideMarketsFromConfig(
+	overriddenMarketMap, removals, err := basic.OverrideMarketsFromConfig(
 		ctx,
 		logger,
 		*cfg.Chain,
@@ -129,6 +131,12 @@ func generateUpserts(ctx context.Context, flags generateUpsertsFlags) error {
 			logger.Error("failed to write overridden marketmap", zap.Error(err))
 			return err
 		}
+	}
+
+	err = file.WriteJSONToFile(flags.marketMapRemovalsOutPath, removals)
+	if err != nil {
+		logger.Error("failed to write marketmap removals", zap.Error(err))
+		return err
 	}
 
 	// UPSERT

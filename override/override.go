@@ -18,12 +18,12 @@ import (
 )
 
 // Override overrides a marketmap given the MarketMapOverride impl.
-func Override(ctx context.Context, logger *zap.Logger, mmo MarketMapOverride, actual, generated mmtypes.MarketMap, options update.Options) (mmtypes.MarketMap, error) {
+func Override(ctx context.Context, logger *zap.Logger, mmo MarketMapOverride, actual, generated mmtypes.MarketMap, options update.Options) (mmtypes.MarketMap, []string, error) {
 	if !options.DisableDeFiMarketMerging {
 		var err error
 		generated, err = ConsolidateDeFiMarkets(logger, generated, actual)
 		if err != nil {
-			return mmtypes.MarketMap{}, fmt.Errorf("failed to consolidate defi markets: %w", err)
+			return mmtypes.MarketMap{}, []string{}, fmt.Errorf("failed to consolidate defi markets: %w", err)
 		}
 		logger.Debug("successfully consolidated DeFi markets")
 	}
@@ -39,7 +39,7 @@ type MarketMapOverride interface {
 		logger *zap.Logger,
 		actual, generated mmtypes.MarketMap,
 		options update.Options,
-	) (mmtypes.MarketMap, error)
+	) (mmtypes.MarketMap, []string, error)
 }
 
 type CoreOverride struct{}
@@ -58,16 +58,16 @@ func (o *CoreOverride) OverrideGeneratedMarkets(
 	logger *zap.Logger,
 	actual, generated mmtypes.MarketMap,
 	options update.Options,
-) (mmtypes.MarketMap, error) {
+) (mmtypes.MarketMap, []string, error) {
 	logger.Info("overriding markets", zap.Any("options", options))
 
-	appendedMarketMap, err := update.CombineMarketMaps(logger, actual, generated, options)
+	appendedMarketMap, removals, err := update.CombineMarketMaps(logger, actual, generated, options)
 	if err != nil {
 		logger.Error("failed to update to market map", zap.Error(err))
-		return mmtypes.MarketMap{}, fmt.Errorf("failed to update to market map: %w", err)
+		return mmtypes.MarketMap{}, []string{}, fmt.Errorf("failed to update to market map: %w", err)
 	}
 
-	return appendedMarketMap, nil
+	return appendedMarketMap, removals, nil
 }
 
 type DyDxOverride struct {
@@ -95,14 +95,14 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 	logger *zap.Logger,
 	actual, generated mmtypes.MarketMap,
 	options update.Options,
-) (mmtypes.MarketMap, error) {
+) (mmtypes.MarketMap, []string, error) {
 	logger.Info("overriding markets for dydx", zap.Any("options", options))
 
 	// first append to the actual market map
-	combinedMarketMap, err := update.CombineMarketMaps(logger, actual, generated, options)
+	combinedMarketMap, removals, err := update.CombineMarketMaps(logger, actual, generated, options)
 	if err != nil {
 		logger.Error("failed to update to market map", zap.Error(err))
-		return mmtypes.MarketMap{}, fmt.Errorf("failed to update to market map: %w", err)
+		return mmtypes.MarketMap{}, []string{}, fmt.Errorf("failed to update to market map: %w", err)
 	}
 
 	logger.Info("combined actual and generated market maps", zap.Int("markets", len(combinedMarketMap.Markets)))
@@ -110,11 +110,11 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 	// filter away all markets that are cross-margined
 	perpsResp, err := o.client.AllPerpetuals(ctx)
 	if err != nil {
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, []string{}, err
 	}
 
 	if perpsResp == nil {
-		return mmtypes.MarketMap{}, fmt.Errorf("nil perpetuals response")
+		return mmtypes.MarketMap{}, []string{}, fmt.Errorf("nil perpetuals response")
 	}
 
 	logger.Info("got perpetuals", zap.Int("count", len(perpsResp.Perpetuals)))
@@ -124,14 +124,14 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 	for _, perpetual := range perpsResp.Perpetuals {
 		connectTicker, err := libdydx.MarketPairToCurrencyPair(perpetual.Params.Ticker)
 		if err != nil {
-			return mmtypes.MarketMap{}, err
+			return mmtypes.MarketMap{}, []string{}, err
 		}
 
 		// perpetual markets should always be in the actual market map, error if they are not in correspondence
 		actualMarket, ok := actual.Markets[connectTicker.String()]
 		if !ok {
 			logger.Error("actual market for cross-margined perpetual not found", zap.String("ticker", connectTicker.String()))
-			return mmtypes.MarketMap{}, fmt.Errorf("actual market for cross-margined perpetual %s not found", connectTicker.String())
+			return mmtypes.MarketMap{}, []string{}, fmt.Errorf("actual market for cross-margined perpetual %s not found", connectTicker.String())
 		}
 
 		// check for the market in generated
@@ -160,7 +160,7 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 		combinedMarketMap.Markets[connectTicker.String()] = actualMarket
 	}
 
-	return combinedMarketMap, nil
+	return combinedMarketMap, removals, nil
 }
 
 // ConsolidateDeFiMarkets takes a generated marketmap and attempts to move any DeFi markets to normal markets if the generated market

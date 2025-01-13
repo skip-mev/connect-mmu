@@ -42,7 +42,7 @@ func TestConvertUpsertsToMessages(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := generator.ConvertUpsertsToMessages(zaptest.NewLogger(t), tt.cfg, config.VersionConnect, tt.upserts)
+			got, err := generator.ConvertUpsertsToMessages(zaptest.NewLogger(t), tt.cfg, config.VersionConnect, "", tt.upserts)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

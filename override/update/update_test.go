@@ -11,18 +11,20 @@ import (
 
 func TestCombineMarketMap(t *testing.T) {
 	tests := []struct {
-		name      string
-		actual    types.MarketMap
-		generated types.MarketMap
-		options   Options
-		want      types.MarketMap
-		wantErr   bool
+		name         string
+		actual       types.MarketMap
+		generated    types.MarketMap
+		options      Options
+		want         types.MarketMap
+		wantRemovals []string
+		wantErr      bool
 	}{
 		{
 			name: "do nothing for empty - nil",
 			want: types.MarketMap{
 				Markets: make(map[string]types.Market),
 			},
+			wantRemovals: []string{},
 		},
 		{
 			name: "do nothing for empty",
@@ -35,6 +37,7 @@ func TestCombineMarketMap(t *testing.T) {
 			want: types.MarketMap{
 				Markets: make(map[string]types.Market),
 			},
+			wantRemovals: []string{},
 		},
 		{
 			name:   "override an empty market map",
@@ -75,7 +78,75 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
+		},
+		{
+			name: "override an empty generated market map with enabled actual market",
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			generated: types.MarketMap{},
+			want: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			wantRemovals: []string{},
+			wantErr:      false,
+		},
+		{
+			name: "override an empty generated market map with disabled actual market",
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          false,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			generated:    types.MarketMap{},
+			want:         types.MarketMap{Markets: map[string]types.Market{}},
+			wantRemovals: []string{"BTC/USD"},
+			wantErr:      false,
 		},
 		{
 			name:   "disable a market that was enabled in the generated market map but does not exist in actual",
@@ -116,7 +187,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "do nothing if there is no diff between generated and generated",
@@ -174,7 +246,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "enable a market that is enabled on chain, but disabled in generated",
@@ -232,7 +305,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "override decimals and min provider count",
@@ -290,7 +364,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "keep existing provider ticker for enabled market",
@@ -348,7 +423,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "keep existing provider ticker for disabled market",
@@ -406,7 +482,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "append market to existing one - disjoint provider configs",
@@ -468,7 +545,8 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 		{
 			name: "append market to existing one - overlapping provider configs",
@@ -534,12 +612,13 @@ func TestCombineMarketMap(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantRemovals: []string{},
+			wantErr:      false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CombineMarketMaps(zaptest.NewLogger(t), tt.actual, tt.generated, tt.options)
+			got, removals, err := CombineMarketMaps(zaptest.NewLogger(t), tt.actual, tt.generated, tt.options)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
@@ -547,6 +626,7 @@ func TestCombineMarketMap(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.wantRemovals, removals)
 		})
 	}
 }

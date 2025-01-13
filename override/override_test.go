@@ -18,11 +18,12 @@ import (
 
 func TestOverride(t *testing.T) {
 	testCases := []struct {
-		name      string
-		actual    types.MarketMap
-		generated types.MarketMap
-		expected  types.MarketMap
-		options   update.Options
+		name             string
+		actual           types.MarketMap
+		generated        types.MarketMap
+		expected         types.MarketMap
+		expectedRemovals []string
+		options          update.Options
 	}{
 		{
 			name: "markets are consolidated",
@@ -85,17 +86,9 @@ func TestOverride(t *testing.T) {
 						{Name: "binance"},
 					},
 				},
-				"BAR/USD": {
-					Ticker: types.Ticker{
-						CurrencyPair:  makeCurrencyPair(t, "BAR/USD"),
-						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
-					},
-					ProviderConfigs: []types.ProviderConfig{
-						{Name: "coinbase"},
-					},
-				},
 			}},
-			options: update.Options{DisableDeFiMarketMerging: false},
+			expectedRemovals: []string{"BAR/USD"},
+			options:          update.Options{DisableDeFiMarketMerging: false},
 		},
 	}
 	mmo := NewCoreOverride()
@@ -103,9 +96,11 @@ func TestOverride(t *testing.T) {
 	ctx := context.Background()
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			out, err := Override(ctx, logger, mmo, tc.actual, tc.generated, tc.options)
+			out, removals, err := Override(ctx, logger, mmo, tc.actual, tc.generated, tc.options)
+
 			require.NoError(t, err)
 			require.True(t, out.Equal(tc.expected), "unexpected output: %v", out)
+			require.Equal(t, removals, tc.expectedRemovals, "unexpected removals: %v", removals)
 		})
 	}
 }
@@ -321,6 +316,7 @@ func TestOverrideMarketMap(t *testing.T) {
 		expect        func(client dydx.Client)
 		generated     types.MarketMap
 		want          types.MarketMap
+		wantRemovals  []string
 		updateEnabled bool
 		wantInitErr   bool
 		wantErr       bool
@@ -402,11 +398,59 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
 		{
-			name:   "override an empty generated market map",
+			name:   "override an empty generated market map with enabled actual market",
+			client: mockClient,
+			expect: func(_ dydx.Client) {
+				mockClient.EXPECT().AllPerpetuals(mock.Anything).Return(&dydx.AllPerpetualsResponse{}, nil).Once()
+			},
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			generated: types.MarketMap{},
+			want: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			wantRemovals:  []string{},
+			updateEnabled: false,
+			wantErr:       false,
+		},
+		{
+			name:   "override an empty generated market map with disabled actual market",
 			client: mockClient,
 			expect: func(_ dydx.Client) {
 				mockClient.EXPECT().AllPerpetuals(mock.Anything).Return(&dydx.AllPerpetualsResponse{}, nil).Once()
@@ -429,25 +473,9 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
-			generated: types.MarketMap{},
-			want: types.MarketMap{
-				Markets: map[string]types.Market{
-					"BTC/USD": {
-						Ticker: types.Ticker{
-							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
-							Decimals:         10,
-							MinProviderCount: 1,
-							Enabled:          false,
-						},
-						ProviderConfigs: []types.ProviderConfig{
-							{
-								Name:           "test",
-								OffChainTicker: "test_offchain",
-							},
-						},
-					},
-				},
-			},
+			generated:     types.MarketMap{},
+			want:          types.MarketMap{Markets: map[string]types.Market{}},
+			wantRemovals:  []string{"BTC/USD"},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -494,6 +522,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -557,6 +586,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -620,6 +650,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -683,6 +714,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -746,6 +778,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -809,6 +842,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -876,6 +910,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -947,6 +982,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1037,6 +1073,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1109,6 +1146,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1181,6 +1219,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1253,6 +1292,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1325,6 +1365,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1397,6 +1438,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1469,6 +1511,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1549,6 +1592,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1629,6 +1673,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1709,6 +1754,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -1785,6 +1831,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1861,6 +1908,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -1937,6 +1985,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -2013,6 +2062,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2089,6 +2139,7 @@ func TestOverrideMarketMap(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2104,7 +2155,7 @@ func TestOverrideMarketMap(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			got, err := marketOverride.OverrideGeneratedMarkets(
+			got, removals, err := marketOverride.OverrideGeneratedMarkets(
 				context.Background(),
 				zaptest.NewLogger(t),
 				tt.actual,
@@ -2122,6 +2173,7 @@ func TestOverrideMarketMap(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.wantRemovals, removals)
 		})
 	}
 }
@@ -2136,6 +2188,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 		expect        func(client dydx.Client)
 		generated     types.MarketMap
 		want          types.MarketMap
+		wantRemovals  []string
 		updateEnabled bool
 		wantInitErr   bool
 		wantErr       bool
@@ -2217,11 +2270,59 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
 		{
-			name:   "override an empty generated market map",
+			name:   "override an empty generated market map with enabled actual market",
+			client: mockClient,
+			expect: func(_ dydx.Client) {
+				mockClient.EXPECT().AllPerpetuals(mock.Anything).Return(&dydx.AllPerpetualsResponse{}, nil).Once()
+			},
+			actual: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			generated: types.MarketMap{},
+			want: types.MarketMap{
+				Markets: map[string]types.Market{
+					"BTC/USD": {
+						Ticker: types.Ticker{
+							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
+							Decimals:         10,
+							MinProviderCount: 1,
+							Enabled:          true,
+						},
+						ProviderConfigs: []types.ProviderConfig{
+							{
+								Name:           "test",
+								OffChainTicker: "test_offchain",
+							},
+						},
+					},
+				},
+			},
+			wantRemovals:  []string{},
+			updateEnabled: false,
+			wantErr:       false,
+		},
+		{
+			name:   "override an empty generated market map with disabled actual market",
 			client: mockClient,
 			expect: func(_ dydx.Client) {
 				mockClient.EXPECT().AllPerpetuals(mock.Anything).Return(&dydx.AllPerpetualsResponse{}, nil).Once()
@@ -2244,25 +2345,9 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
-			generated: types.MarketMap{},
-			want: types.MarketMap{
-				Markets: map[string]types.Market{
-					"BTC/USD": {
-						Ticker: types.Ticker{
-							CurrencyPair:     connecttypes.NewCurrencyPair("BTC", "USD"),
-							Decimals:         10,
-							MinProviderCount: 1,
-							Enabled:          false,
-						},
-						ProviderConfigs: []types.ProviderConfig{
-							{
-								Name:           "test",
-								OffChainTicker: "test_offchain",
-							},
-						},
-					},
-				},
-			},
+			generated:     types.MarketMap{},
+			want:          types.MarketMap{Markets: map[string]types.Market{}},
+			wantRemovals:  []string{"BTC/USD"},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2309,6 +2394,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2372,6 +2458,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2435,6 +2522,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2498,6 +2586,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2561,6 +2650,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2624,6 +2714,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2687,6 +2778,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2758,6 +2850,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2776,6 +2869,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				}, nil).Once()
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       true,
 		},
@@ -2848,6 +2942,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -2920,6 +3015,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -2992,6 +3088,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3064,6 +3161,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -3136,6 +3234,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3208,6 +3307,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -3288,6 +3388,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3368,6 +3469,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -3448,6 +3550,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -3524,6 +3627,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3600,6 +3704,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3676,6 +3781,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: true,
 			wantErr:       false,
 		},
@@ -3752,6 +3858,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3828,6 +3935,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 					},
 				},
 			},
+			wantRemovals:  []string{},
 			updateEnabled: false,
 			wantErr:       false,
 		},
@@ -3843,7 +3951,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			got, err := marketOverride.OverrideGeneratedMarkets(
+			got, removals, err := marketOverride.OverrideGeneratedMarkets(
 				context.Background(),
 				zaptest.NewLogger(t),
 				tt.actual,
@@ -3861,6 +3969,7 @@ func TestOverrideMarketMapOverwriteProviders(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.wantRemovals, removals)
 		})
 	}
 }

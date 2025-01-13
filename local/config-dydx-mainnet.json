@@ -13,10 +13,11 @@
       { "name": "kucoin" },
       { "name": "okx" },
       { "name": "mexc" },
-      { "name": "gecko" }
+      { "name": "gecko" },
+      { "name": "raydium" }
     ],
     "coinmarketcap": { "api_key": "" },
-    "raydium": null,
+    "raydium": [],
     "gecko_network_dex_pairs": [{ "network": "eth", "dex": "uniswap_v3" }, { "network": "base", "dex": "uniswap-v3-base" }]
   },
   "generate": {
@@ -177,17 +178,8 @@
         "normalize_by_pair": "ETH/USD"
       }
     },
-    "min_cex_provider_count": 3,
+    "min_cex_provider_count": 2,
     "min_dex_provider_count": 1,
-    "disable_providers": {
-      "DAI/USD": ["gate_ws"],
-      "EURC/USD": ["bitstamp_ws"],
-      "LUNA/USD": ["kraken_api"],
-      "NEIRO/USD": ["okx_ws", "binance_ws"],
-      "WELL/USD": ["bybit_ws"],
-      "ZEN/USD": ["huobi_ws"],
-      "ZERO/USD": ["raydium_api"]
-    },
     "exclude_pairs": {
       "AGLD/USD": {},
       "AUD/USD": {},

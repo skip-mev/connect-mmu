@@ -51,7 +51,7 @@ func OverrideCmd() *cobra.Command {
 
 			logger.Info("successfully read marketmap", zap.String("path", flags.marketMapPath), zap.Int("num markets", len(fileMarketMap.Markets)))
 
-			overriddenMarketMap, err := OverrideMarketsFromConfig(
+			overriddenMarketMap, removals, err := OverrideMarketsFromConfig(
 				ctx,
 				logger,
 				*cfg.Chain,
@@ -72,8 +72,14 @@ func OverrideCmd() *cobra.Command {
 				logger.Error("failed to write marketmap", zap.Error(err))
 				return err
 			}
-
 			logger.Info("successfully wrote marketmap", zap.String("path", flags.marketMapOutPath))
+
+			err = file.WriteJSONToFile(flags.marketMapRemovalsOutPath, removals)
+			if err != nil {
+				logger.Error("failed to write marketmap removals", zap.Error(err))
+				return err
+			}
+			logger.Info("successfully wrote marketmap removals", zap.String("path", flags.marketMapRemovalsOutPath))
 
 			return nil
 		},
@@ -88,6 +94,7 @@ type overrideCmdFlags struct {
 	configPath               string
 	marketMapPath            string
 	marketMapOutPath         string
+	marketMapRemovalsOutPath string
 	updateEnabled            bool
 	overwriteProviders       bool
 	existingOnly             bool
@@ -103,6 +110,7 @@ func overrideCmdConfigureFlags(cmd *cobra.Command, flags *overrideCmdFlags) {
 	cmd.Flags().BoolVar(&flags.disableDeFiMarketMerging, DisableDeFiMarketMerging, DisableDeFiMarketMergingDefault, DisableDeFiMarketMergingDescription)
 
 	cmd.Flags().StringVar(&flags.marketMapOutPath, MarketMapOutPathOverrideFlag, MarketMapOutPathOverrideDefault, MarketMapOutPathOverrideDescription)
+	cmd.Flags().StringVar(&flags.marketMapRemovalsOutPath, MarketMapRemovalsOutPathFlag, MarketMapRemovalsOutPathDefault, MarketMapRemovalsOutPathDescription)
 }
 
 func OverrideMarketsFromConfig(
@@ -111,18 +119,18 @@ func OverrideMarketsFromConfig(
 	cfg config.ChainConfig,
 	generated mmtypes.MarketMap,
 	updateEnabled, overwriteProviders, existingOnly, disableDeFiMarketMerging bool,
-) (mmtypes.MarketMap, error) {
+) (mmtypes.MarketMap, []string, error) {
 	// create client based on config
 	mmClient, err := marketmapclient.NewClientFromChainConfig(logger, cfg)
 	if err != nil {
 		logger.Error("failed to create marketmap client", zap.Error(err))
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, []string{}, err
 	}
 
 	onChainMarketMap, err := mmClient.GetMarketMap(ctx)
 	if err != nil {
 		logger.Error("failed to get marketmap from chain", zap.Error(err))
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, []string{}, err
 	}
 
 	logger.Info("successfully got on chain marketmap", zap.Int("num markets", len(onChainMarketMap.Markets)))
@@ -133,11 +141,11 @@ func OverrideMarketsFromConfig(
 		marketOverride, err = override.NewDyDxOverride(dydx.NewHTTPClient(cfg.RESTAddress))
 		if err != nil {
 			logger.Error("failed to create dydx override", zap.Error(err))
-			return mmtypes.MarketMap{}, err
+			return mmtypes.MarketMap{}, []string{}, err
 		}
 	}
 
-	overriddenMarketMap, err := override.Override(
+	overriddenMarketMap, removals, err := override.Override(
 		ctx,
 		logger,
 		marketOverride,
@@ -152,8 +160,8 @@ func OverrideMarketsFromConfig(
 	)
 	if err != nil {
 		logger.Error("failed to override marketmap", zap.Error(err))
-		return mmtypes.MarketMap{}, err
+		return mmtypes.MarketMap{}, []string{}, err
 	}
 
-	return overriddenMarketMap, nil
+	return overriddenMarketMap, removals, nil
 }

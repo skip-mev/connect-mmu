@@ -12,12 +12,13 @@ import (
 	"github.com/skip-mev/connect-mmu/config"
 )
 
-// ConvertUpsertsToMessages converts a set of upsert markets to a slice to sdk.Messages respecting the configured
+// ConvertUpsertsToMessages converts a set of upsert markets to a slice of sdk.Messages respecting the configured
 // max size of a transaction.
 func ConvertUpsertsToMessages(
 	logger *zap.Logger,
 	cfg config.TransactionConfig,
 	version config.Version,
+	authorityAddress string,
 	upserts []mmtypes.Market,
 ) ([]sdk.Msg, error) {
 	msgs := make([]sdk.Msg, 0)
@@ -47,16 +48,17 @@ func ConvertUpsertsToMessages(
 			txMarkets := upserts[start:i]
 			logger.Info("creating update msg", zap.Int("markets", len(txMarkets)))
 
-			// TODO can we do something better than provide a nil authority and overwrite later?
 			var msg sdk.Msg
 			switch version {
 			case config.VersionSlinky:
 				msg = &slinkymmtypes.MsgUpsertMarkets{
-					Markets: marketmap.ConnectToSlinkyMarkets(upserts),
+					Authority: authorityAddress,
+					Markets:   marketmap.ConnectToSlinkyMarkets(upserts),
 				}
 			case config.VersionConnect:
 				msg = &mmtypes.MsgUpsertMarkets{
-					Markets: upserts,
+					Authority: authorityAddress,
+					Markets:   upserts,
 				}
 			default:
 				return nil, fmt.Errorf("unsupported version %s", version)
@@ -79,11 +81,13 @@ func ConvertUpsertsToMessages(
 		switch version {
 		case config.VersionSlinky:
 			msg = &slinkymmtypes.MsgUpsertMarkets{
-				Markets: marketmap.ConnectToSlinkyMarkets(upserts[start:]),
+				Authority: authorityAddress,
+				Markets:   marketmap.ConnectToSlinkyMarkets(upserts[start:]),
 			}
 		case config.VersionConnect:
 			msg = &mmtypes.MsgUpsertMarkets{
-				Markets: upserts[start:],
+				Authority: authorityAddress,
+				Markets:   upserts[start:],
 			}
 		default:
 			return nil, fmt.Errorf("unsupported version %s", version)
@@ -93,4 +97,30 @@ func ConvertUpsertsToMessages(
 	}
 
 	return msgs, nil
+}
+
+// ConvertRemovalsToMessage converts a set of market tickers to remove to a slice of sdk.Message.
+func ConvertRemovalsToMessages(
+	logger *zap.Logger,
+	version config.Version,
+	authorityAddress string,
+	removals []string,
+) ([]sdk.Msg, error) {
+	var msg sdk.Msg
+	switch version {
+	case config.VersionSlinky:
+		msg = &slinkymmtypes.MsgRemoveMarkets{
+			Authority: authorityAddress,
+			Markets:   removals,
+		}
+	case config.VersionConnect:
+		msg = &mmtypes.MsgRemoveMarkets{
+			Authority: authorityAddress,
+			Markets:   removals,
+		}
+	default:
+		return nil, fmt.Errorf("unsupported version %s", version)
+	}
+	logger.Info("created remove msg", zap.Int("num markets to remove", len(removals)))
+	return []sdk.Msg{msg}, nil
 }

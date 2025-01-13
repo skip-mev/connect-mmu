@@ -47,6 +47,10 @@ const (
 	UpsertsPathDefault     = "./tmp/upserts.json"
 	UpsertsPathDescription = "path to list of markets to be updated or inserted"
 
+	RemovalsPathFlag        = "removals"
+	RemovalsPathDefault     = "./tmp/market-map-removals.json"
+	RemovalsPathDescription = "path to list of markets to be removed from the marketmap"
+
 	SimulateFlag        = "simulate"
 	SimulateDefault     = false
 	SimulateDescription = "simulate transaction without submitting"
@@ -81,6 +85,10 @@ const (
 	MarketMapOutPathOverrideFlag        = "override-market-map-out"
 	MarketMapOutPathOverrideDefault     = MarketMapOverrideDefault
 	MarketMapOutPathOverrideDescription = "path to output override market map"
+
+	MarketMapRemovalsOutPathFlag        = "override-market-map-removals-out"
+	MarketMapRemovalsOutPathDefault     = "./tmp/market-map-removals.json"
+	MarketMapRemovalsOutPathDescription = "path to output markets to remove from market map"
 
 	// upserts
 	UpsertsOutPathFlag        = "upserts-out"
