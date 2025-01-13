@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/skip-mev/connect-mmu/client/marketmap"
+	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/lib/file"
 )
 
@@ -116,12 +117,15 @@ func DiffCmd() *cobra.Command {
 
 			var newMarketsString string
 			if len(newMarkets) > 0 {
+				newMarketsTickers := make([]string, 0)
+
 				colorDefault := "\033[0m"
 				colorGreen := "\033[32m"
 
 				b := bytes.NewBuffer(nil)
 				b.WriteString(fmt.Sprintf("\n\n=== ADDING %d NEW MARKETS ===\n\n ", len(newMarkets)))
 				for _, newMarket := range newMarkets {
+					newMarketsTickers = append(newMarketsTickers, newMarket.Ticker.String())
 					b.WriteString(colorGreen)
 					b.WriteString("+ ")
 					b.WriteString(newMarket.Ticker.String())
@@ -136,6 +140,9 @@ func DiffCmd() *cobra.Command {
 				}
 				newMarketsString = b.String()
 				fmt.Println(newMarketsString)
+
+				logger := logging.Logger(cmd.Context())
+				logger.Info("new markets", zap.Bool("slack_report", true), zap.Strings("markets", newMarketsTickers))
 			} else {
 				fmt.Printf("\n\n=== NO NEW MARKETS ADDED ===\n\n")
 			}

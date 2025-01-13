@@ -13,8 +13,10 @@ import (
 
 	"github.com/skip-mev/connect/v2/x/marketmap/types"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/cmd/utils/validate"
+	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/lib/file"
 	"github.com/skip-mev/connect-mmu/validator"
 	validatortypes "github.com/skip-mev/connect-mmu/validator/types"
@@ -191,7 +193,13 @@ func ValidateCmd() *cobra.Command {
 				cmd.Println("failed to write report file: ", err.Error())
 			}
 
-			return generateErrorFromReport(mm, summary, val.MissingReports(health))
+			allErrs := generateErrorFromReport(mm, summary, val.MissingReports(health))
+
+			logger := logging.Logger(cmd.Context())
+			logger.Info("validation errors", zap.Bool("slack_report", true), zap.Errors("errors", allErrs))
+
+			err = errors.Join(allErrs...)
+			return err
 		},
 	}
 
@@ -263,7 +271,7 @@ func validateCmdConfigureFlags(cmd *cobra.Command, flags *validateCmdFlags) {
 }
 
 // generateErrorFromReport will generate an error based on failing and missing reports.
-func generateErrorFromReport(mm types.MarketMap, reports validatortypes.Reports, missing map[string][]string) error {
+func generateErrorFromReport(mm types.MarketMap, reports validatortypes.Reports, missing map[string][]string) []error {
 	allErrs := make([]error, 0)
 	for ticker, providers := range missing {
 		allErrs = append(allErrs,
@@ -303,8 +311,8 @@ func generateErrorFromReport(mm types.MarketMap, reports validatortypes.Reports,
 		}
 	}
 	allErrs = append(allErrs, reportErrs...)
-	err := errors.Join(allErrs...)
-	return err
+
+	return allErrs
 }
 
 // getMarketMapFromFlags will get a marketmap based on the flags passed.
