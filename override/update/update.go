@@ -69,7 +69,6 @@ func CombineMarketMaps(
 				if !options.OverwriteProviders {
 					updatedProviderConfigs = appendToProviders(actualMarket, market)
 				}
-
 				market.ProviderConfigs = updatedProviderConfigs
 			}
 		} else {

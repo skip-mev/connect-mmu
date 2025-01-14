@@ -90,6 +90,71 @@ func TestOverride(t *testing.T) {
 			expectedRemovals: []string{"BAR/USD"},
 			options:          update.Options{DisableDeFiMarketMerging: false},
 		},
+		{
+			name: "markets are consolidated, actual market has DeFi ticker",
+			actual: types.MarketMap{Markets: map[string]types.Market{
+				"FOO,UNISWAP,0XUNISWAP/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO,UNISWAP,0XUNISWAP/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "uniswap"},
+					},
+				},
+				"BAR/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAR/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"3"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"},
+					},
+				},
+			}},
+			generated: types.MarketMap{Markets: map[string]types.Market{
+				"FOO/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "coinbase"}, {Name: "uniswap"},
+					},
+				},
+				"BAZ/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAZ/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"4"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "binance"},
+					},
+				},
+			}},
+			expected: types.MarketMap{Markets: map[string]types.Market{
+				"FOO,UNISWAP,0XUNISWAP/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "FOO,UNISWAP,0XUNISWAP/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "uniswap"}, {Name: "coinbase"},
+					},
+				},
+				"BAZ/USD": {
+					Ticker: types.Ticker{
+						CurrencyPair:  makeCurrencyPair(t, "BAZ/USD"),
+						Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"4"}]}`,
+					},
+					ProviderConfigs: []types.ProviderConfig{
+						{Name: "binance"},
+					},
+				},
+			}},
+			expectedRemovals: []string{"BAR/USD"},
+			options:          update.Options{DisableDeFiMarketMerging: false},
+		},
 	}
 	mmo := NewCoreOverride()
 	logger := zaptest.NewLogger(t)
@@ -99,8 +164,8 @@ func TestOverride(t *testing.T) {
 			out, removals, err := Override(ctx, logger, mmo, tc.actual, tc.generated, tc.options)
 
 			require.NoError(t, err)
-			require.True(t, out.Equal(tc.expected), "unexpected output: %v", out)
-			require.Equal(t, removals, tc.expectedRemovals, "unexpected removals: %v", removals)
+			require.Equal(t, tc.expected, out, "unexpected output: %v", out)
+			require.Equal(t, tc.expectedRemovals, removals, "unexpected removals: %v", removals)
 		})
 	}
 }
@@ -228,7 +293,7 @@ func TestConsolidateGeneratedMarkets(t *testing.T) {
 							CurrencyPair:  makeCurrencyPair(t, "BTC/USD"),
 							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
 						},
-						ProviderConfigs: nil,
+						ProviderConfigs: []types.ProviderConfig{},
 					},
 				},
 			},
@@ -252,7 +317,7 @@ func TestConsolidateGeneratedMarkets(t *testing.T) {
 			},
 		},
 		{
-			name: "market is not consolidated if actual is a defi ticker.",
+			name: "market is consolidated if actual is a defi ticker.",
 			generated: types.MarketMap{
 				Markets: map[string]types.Market{
 					"BTC,UNISWAP,0XBITCOIN/USD": {
@@ -277,9 +342,9 @@ func TestConsolidateGeneratedMarkets(t *testing.T) {
 			},
 			expectedOut: types.MarketMap{
 				Markets: map[string]types.Market{
-					"BTC,UNISWAP,0XBITCOIN/USD": {
+					"BTC,RAYDIUM,03231/USD": {
 						Ticker: types.Ticker{
-							CurrencyPair:  makeCurrencyPair(t, "BTC,UNISWAP,0XBITCOIN/USD"),
+							CurrencyPair:  makeCurrencyPair(t, "BTC,RAYDIUM,03231/USD"),
 							Metadata_JSON: `{"aggregate_ids":[{"venue":"coinmarketcap","ID":"2"}]}`,
 						},
 						ProviderConfigs: []types.ProviderConfig{{Name: "uniswap"}},
@@ -294,7 +359,7 @@ func TestConsolidateGeneratedMarkets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			out, err := ConsolidateDeFiMarkets(logger, tc.generated, tc.actual)
 			require.NoError(t, err)
-			require.True(t, tc.expectedOut.Equal(out))
+			require.Equal(t, tc.expectedOut, out)
 		})
 	}
 }

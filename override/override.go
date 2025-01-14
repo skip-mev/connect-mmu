@@ -171,16 +171,20 @@ func (o *DyDxOverride) OverrideGeneratedMarkets(
 // actual market:    FOO/USD - CMC ID 4
 //
 // result: FOO,UNISWAP,0XFOOBAR/USD ---becomes---> FOO/USD.
+//
+// NOTE: If there is an existing enabled market with a DeFi ticker, then we DO want to consolidate to that market.
+//
+// example:
+// generated market: FOO/USD - CMC ID 4, providers Binance and Uniswap
+// actual market:    FOO,UNISWAP,0XFOOBAR/USD - CMC ID 4, providers Uniswap
+//
+// result: FOO,UNISWAP,0XFOOBAR/USD with Uniswap provider ---becomes---> FOO,UNISWAP,0XFOOBAR/USD with Binance and Uniswap provider
 func ConsolidateDeFiMarkets(logger *zap.Logger, generated, actual mmtypes.MarketMap) (mmtypes.MarketMap, error) {
 	generatedCMCIDMapping, err := getCMCTickerMapping(logger, generated, true)
 	if err != nil {
 		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for generated market map: %w", err)
 	}
-	// we don't want any DeFi markets in our mapping because we don't want to append any providers to an on-chain defi market.
-	// this is because DeFi markets are provider-bound, and should not include any other providers.
-	//
-	// i.e. for a ticker FOO,UNISWAPV3,0XFOOBAR, it would not make sense to append raydium, coinbase... etc.
-	actualCMCIDMapping, err := getCMCTickerMapping(logger, actual, false)
+	actualCMCIDMapping, err := getCMCTickerMapping(logger, actual, true)
 	if err != nil {
 		return mmtypes.MarketMap{}, fmt.Errorf("failed to get CMC ID map for actual market map: %w", err)
 	}
@@ -189,7 +193,17 @@ func ConsolidateDeFiMarkets(logger *zap.Logger, generated, actual mmtypes.Market
 		if actualTicker, ok := actualCMCIDMapping[cmcID]; ok {
 			if generatedTicker != actualTicker {
 				if isDefiTicker(generatedTicker) && !isDefiTicker(actualTicker) {
-					logger.Debug("consolidating ticker", zap.String("generated", generatedTicker), zap.String("actual", actualTicker))
+					logger.Debug("consolidating ticker to normal ticker", zap.String("generated", generatedTicker), zap.String("actual", actualTicker))
+					generatedMarket := generated.Markets[generatedTicker]
+					pair, err := connecttypes.CurrencyPairFromString(actualTicker)
+					if err != nil {
+						return mmtypes.MarketMap{}, fmt.Errorf("failed to convert ticker %s to currency pair: %w", actualTicker, err)
+					}
+					generatedMarket.Ticker.CurrencyPair = pair
+					generated.Markets[actualTicker] = generatedMarket
+					delete(generated.Markets, generatedTicker)
+				} else if isDefiTicker(actualTicker) { // If marketmap already contains a DeFi ticker, consolidate to that
+					logger.Debug("consolidating ticker to existing defi ticker", zap.String("generated", generatedTicker), zap.String("actual", actualTicker))
 					generatedMarket := generated.Markets[generatedTicker]
 					pair, err := connecttypes.CurrencyPairFromString(actualTicker)
 					if err != nil {
