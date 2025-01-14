@@ -13,7 +13,7 @@ import (
 func ReadBytesFromFile(path string) ([]byte, error) {
 	if aws.IsLambda() {
 		// Read from S3
-		return aws.ReadFromS3(path)
+		return aws.ReadFromS3(path, true)
 	}
 	// Read from local file
 	return os.ReadFile(path)
@@ -22,7 +22,7 @@ func ReadBytesFromFile(path string) ([]byte, error) {
 func WriteBytesToFile(path string, bz []byte) error {
 	if aws.IsLambda() {
 		// Write output to S3
-		return aws.WriteToS3(path, bz)
+		return aws.WriteToS3(path, bz, true)
 	}
 	// Write output to local file
 	return os.WriteFile(path, bz, 0o600)
