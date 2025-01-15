@@ -2,15 +2,19 @@ package basic
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	auth "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	mmtypes "github.com/skip-mev/connect/v2/x/marketmap/types"
+	slinkymmtypes "github.com/skip-mev/slinky/x/marketmap/types"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-
-	cmttypes "github.com/cometbft/cometbft/types"
 
 	"github.com/skip-mev/connect-mmu/cmd/mmu/logging"
 	"github.com/skip-mev/connect-mmu/config"
@@ -22,7 +26,7 @@ import (
 )
 
 // DispatchCmd returns a command to DispatchCmd market upserts.
-func DispatchCmd(registry *signing.Registry) *cobra.Command {
+func DispatchCmd(signingRegistry *signing.Registry) *cobra.Command {
 	var flags dispatchCmdFlags
 
 	cmd := &cobra.Command{
@@ -36,11 +40,8 @@ func DispatchCmd(registry *signing.Registry) *cobra.Command {
 			// Validate that exactly one of upserts or removals is set
 			hasUpserts := flags.upsertsPath != ""
 			hasRemovals := flags.removalsPath != ""
-			if hasUpserts && hasRemovals {
-				return fmt.Errorf("cannot specify both --upserts and --removals")
-			}
 			if !hasUpserts && !hasRemovals {
-				return fmt.Errorf("must specify either --upserts or --removals")
+				return fmt.Errorf("must specify either --upserts and/or --removals")
 			}
 
 			cfg, err := config.ReadConfig(flags.configPath)
@@ -65,7 +66,7 @@ func DispatchCmd(registry *signing.Registry) *cobra.Command {
 				}
 			}
 
-			signer, err := registry.CreateSigner(signerConfig, *cfg.Chain)
+			signer, err := signingRegistry.CreateSigner(signerConfig, *cfg.Chain)
 			if err != nil {
 				return fmt.Errorf("failed to create signer: %w", err)
 			}
@@ -81,12 +82,27 @@ func DispatchCmd(registry *signing.Registry) *cobra.Command {
 			}
 
 			var txs []cmttypes.Tx
-
-			if flags.upsertsPath != "" {
-				txs, err = generateUpsertTransactions(cmd.Context(), logger, dp, &cfg, signerAddress, flags.upsertsPath)
-			} else {
-				txs, err = generateRemovalTransactions(cmd.Context(), logger, dp, &cfg, signerAddress, flags.removalsPath)
+			if hasUpserts {
+				upsertTxs, err := generateUpsertTransactions(cmd.Context(), logger, dp, &cfg, signerAddress, flags.upsertsPath)
+				if err != nil {
+					return err
+				}
+				txs = append(txs, upsertTxs...)
 			}
+			if hasRemovals {
+				removalTxs, err := generateRemovalTransactions(cmd.Context(), logger, dp, &cfg, signerAddress, flags.removalsPath)
+				if err != nil {
+					return err
+				}
+				txs = append(txs, removalTxs...)
+			}
+
+			decodedTxs, err := decodeTxs(txs)
+			if err != nil {
+				return err
+			}
+
+			err = file.WriteJSONToFile("transactions.json", decodedTxs)
 			if err != nil {
 				return err
 			}
@@ -133,11 +149,6 @@ func generateUpsertTransactions(
 		return nil, err
 	}
 
-	err = file.WriteJSONToFile("upsert_transactions.json", txs)
-	if err != nil {
-		return nil, err
-	}
-
 	return txs, nil
 }
 
@@ -169,12 +180,45 @@ func generateRemovalTransactions(
 		return nil, err
 	}
 
-	err = file.WriteJSONToFile("removal_transactions.json", txs)
-	if err != nil {
-		return nil, err
+	return txs, nil
+}
+
+type DecodedTx struct {
+	Body       *codectypes.Any `json:"body"`
+	AuthInfo   *codectypes.Any `json:"auth_info"`
+	Signatures [][]byte        `json:"signatures"`
+}
+
+func decodeTxs(txs []cmttypes.Tx) ([]DecodedTx, error) {
+	registry := codectypes.NewInterfaceRegistry()
+	cdc := codec.NewProtoCodec(registry)
+	decoder := auth.DefaultTxDecoder(cdc)
+	jsonEncoder := auth.DefaultJSONTxEncoder(cdc)
+	slinkymmtypes.RegisterInterfaces(registry)
+
+	decodedTxs := make([]DecodedTx, len(txs))
+
+	for i, tx := range txs {
+		decodedTx, err := decoder(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		jsonBz, err := jsonEncoder(decodedTx)
+		if err != nil {
+			return nil, err
+		}
+
+		var decodedJSON DecodedTx
+
+		if err := json.Unmarshal(jsonBz, &decodedJSON); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal tx json: %w", err)
+		}
+
+		decodedTxs[i] = decodedJSON
 	}
 
-	return txs, nil
+	return decodedTxs, nil
 }
 
 func getSignerAddress(ctx context.Context, signer signing.SigningAgent) (string, error) {

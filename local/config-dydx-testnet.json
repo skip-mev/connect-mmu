@@ -116,7 +116,7 @@
         "min_provider_liquidity": 10000
       },
       "mexc_ws": {
-        "isSupplemental": false,
+        "isSupplemental": true,
         "require_aggregate_ids": false,
         "ignore_liquidity": false,
         "ignore_volume": false,
@@ -185,12 +185,6 @@
     },
     "min_cex_provider_count": 2,
     "min_dex_provider_count": 1,
-    "disable_providers": {
-      "DAI/USD": ["gate_ws"],
-      "EURC/USD": ["bitstamp_ws"],
-      "ZEN/USD": ["huobi_ws"],
-      "ZERO/USD": ["raydium_api"]
-    },
     "exclude_pairs": {
       "AGLD/USD": {},
       "AUD/USD": {},
@@ -401,7 +395,7 @@
     "signing": {
       "type": "simulate_agent",
       "config": {
-        "address": "dydx1vvc9vl6z9pu0vt2y79d0ln8zp6qmpmrhrcnnuy"
+        "address": "dydx1gqt2r0jnmm6wvxta6mee0qxwpcfwgfqfvaxqdh"
       }
     },
     "submitter": {
