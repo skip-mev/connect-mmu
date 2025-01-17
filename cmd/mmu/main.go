@@ -40,6 +40,7 @@ const (
 	Validate
 	Upserts
 	Diff
+	Dispatch
 )
 
 func createSigningRegistry() *signing.Registry {
@@ -62,6 +63,7 @@ func getSupportedCommands() map[string]Command {
 		"validate": Validate,
 		"upserts":  Upserts,
 		"diff":     Diff,
+		"dispatch": Dispatch,
 	}
 }
 
@@ -119,6 +121,8 @@ func getArgsFromLambdaEvent(ctx context.Context, event json.RawMessage) ([]strin
 		args = []string{"upserts", "--config", fmt.Sprintf("./local/config-dydx-%s.json", network), "--warn-on-invalid-market-map"}
 	case Diff:
 		args = []string{"diff", "--network", fmt.Sprintf("dydx-%s", network), "--market-map", "generated-market-map.json", "--output", "diff", "--slinky-api"}
+	case Dispatch:
+		args = []string{"dispatch", "--config", fmt.Sprintf("./local/config-dydx-%s.json", network), "--upserts", "upserts.json", "--removals", "market-map-removals.json"}
 	}
 
 	logger.Info("received Lambda command", zap.Strings("args", args))

@@ -20,7 +20,9 @@ import (
 	"github.com/skip-mev/connect-mmu/config"
 	"github.com/skip-mev/connect-mmu/dispatcher"
 	"github.com/skip-mev/connect-mmu/dispatcher/transaction/generator"
+	"github.com/skip-mev/connect-mmu/lib/aws"
 	"github.com/skip-mev/connect-mmu/lib/file"
+	"github.com/skip-mev/connect-mmu/lib/slack"
 	"github.com/skip-mev/connect-mmu/signing"
 	"github.com/skip-mev/connect-mmu/signing/simulate"
 )
@@ -102,16 +104,28 @@ func DispatchCmd(signingRegistry *signing.Registry) *cobra.Command {
 				return err
 			}
 
+			// Write timestamped output file
 			err = file.WriteJSONToFile("transactions.json", decodedTxs)
 			if err != nil {
 				return err
 			}
 
-			if flags.simulate {
-				return nil
+			// Write "latest" output file
+			bz, err := json.MarshalIndent(decodedTxs, "", "  ")
+			if err != nil {
+				return err
+			}
+			err = aws.WriteToS3("latest-mm-tx.json", bz, false)
+			if err != nil {
+				return err
 			}
 
-			return dp.SubmitTransactions(cmd.Context(), txs)
+			err = slack.SendNotification(fmt.Sprintf("Latest MMU TX: %s", bz))
+			if err != nil {
+				return err
+			}
+
+			return nil
 		},
 	}
 
